@@ -26,11 +26,22 @@ struct UserLogout {
 }
 
 #[post("/signup", format = "json", data = "<signup_info>")]
-fn signup<'a>(signup_info: Json<SignupInfo>) -> Status {
-    println!("signup username: {}", signup_info.username);
-    println!("signup email: {}", signup_info.email);
-    println!("signup password: {}", signup_info.password);
-    Status::Created
+async fn signup<'a>(
+    signup_info: Json<SignupInfo>,
+    db_manager: &rocket::State<DbManager>,
+) -> Status {
+    let q = format!(
+        "INSERT INTO user (username, email, password) VALUES (\"{}\", \"{}\", \"{}\")",
+        signup_info.username, signup_info.email, signup_info.password
+    );
+    let success: bool = db_manager.execute(&q).await;
+    if success {
+        println!("User created");
+        Status::Created
+    } else {
+        println!("Failed to create user");
+        Status::InternalServerError
+    }
 }
 
 #[post("/login", format = "json", data = "<user_login>")]
@@ -50,8 +61,10 @@ fn logout(user_logout: Json<UserLogout>) -> Status {
 #[launch]
 #[tokio::main]
 async fn rocket() -> _ {
-    let db_url: String = String::from("");
+    let db_url: String = String::from("mysql://chatserver:ServerPass123@localhost:3306/chatapp");
     let mut db_manager = DbManager::new(db_url);
     db_manager.connect().await;
-    rocket::build().mount("/chatapp/user/", routes![signup, login, logout])
+    rocket::build()
+        .manage::<DbManager>(db_manager)
+        .mount("/chatapp/user/", routes![signup, login, logout])
 }

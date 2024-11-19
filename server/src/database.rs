@@ -24,4 +24,23 @@ impl DbManager {
             }
         }
     }
+
+    pub async fn execute(&self, query: &str) -> bool {
+        match &self.conn_pool {
+            Some(pool) => {
+                let result = sqlx::query(query).execute(pool).await;
+                match result {
+                    Ok(_) => true,
+                    Err(e) => {
+                        println!("Error executing query {} : {}", query, e.to_string());
+                        false
+                    }
+                }
+            }
+            None => {
+                println!("Unable to execute query due to missing db connection.");
+                false
+            }
+        }
+    }
 }
