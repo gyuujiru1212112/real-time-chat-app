@@ -10,3 +10,5 @@ rocket = { version = "0.5.1", features = ["json"] }
 serde = "1.0.215"
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.8.2", features = ["mysql", "runtime-tokio"] }
+validator = "0.19.0"
+regex = "1.11.1"
