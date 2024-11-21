@@ -9,4 +9,5 @@ rocket = { version = "0.5.1", features = ["json"] }
 serde = "1.0.215"
 sqlx = { version = "0.8.2", features = ["mysql", "runtime-tokio"] }
 tokio = { version = "1", features = ["full"] }
+uuid = { version = "1.11.0", features = ["v4"] }
 warp = "0.3"

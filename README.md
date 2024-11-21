@@ -17,10 +17,11 @@ GRANT ALL ON chatapp.* TO 'chatserver'@'localhost';
 * Create the `user` table:
 ```
 CREATE TABLE user (
-    user_id int AUTO_INCREMENT PRIMARY KEY,
     username varchar(255) NOT NULL,
     email varchar(255),
-    password varchar(255) NOT NULL
+    password varchar(255) NOT NULL,
+    session_id varchar(255),
+    PRIMARY KEY (username)
 );
 ```
 
