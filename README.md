@@ -27,6 +27,27 @@ CREATE TABLE user (
 
 
 ## Client
-
+- Commands
+  - signup [username] [email] [password]
+  - login [username] [password]
+  - logout
+  - help
+  - exit
+- Rules
+  - The username must satisfy:
+    1. Number of characters must be between 8 and 20
+    2. Must start with a letter.
+    3. Only alphanumeric characters (a-z, A-Z, 0-9), underscores (_) and dots (.) are allowed.
+    4. No consecutive underscores or dots (e.g., __ or ..).
+    5. No underscore or dot at the end.
+  - The password must satisfy:
+    1. Number of characters must be between 6 and 16.
+    2. Must contain:
+        - At least one digit (0-9).
+        - At least one special character (!@#$%^&*).
+    3. Can only contain:
+       - Letters (a-z, A-Z).
+       - Digits (0-9).
+       - Special characters (!@#$%^&*).
 
 ## Server
