@@ -1,7 +1,7 @@
 mod commands;
 
 use std::io::{self, Write};
-use commands::Command;
+use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
 use reqwest::Client;
 
 #[tokio::main]
@@ -32,8 +32,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("resume_chat_room []");
             }
             Some(Command::Signup { username, email, password }) => {
-                
-                commands::signup(&client, username.to_string(), email.to_string(), password.to_string()).await?;
+                if !is_valid_username(&username)
+                {
+                    continue;
+                }
+                if !is_valid_email_addr(&email)
+                {
+                    continue;
+                }
+                if !is_valid_password(&password)
+                {
+                    continue;
+                }
+
+                commands::signup(&client, username.to_string(),
+                    email.to_string(),
+                    password.to_string()).await?;
             }
             Some(Command::Login { username, password }) => {
 
