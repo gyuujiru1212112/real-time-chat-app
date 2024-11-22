@@ -1,6 +1,7 @@
 mod commands;
 
 use std::io::{self, Write};
+use commands::Command;
 use reqwest::Client;
 
 #[tokio::main]
@@ -9,17 +10,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Type 'help' to see available commands.");
     // client
     let client = Client::new();
+    let mut input = String::new();
 
     // get the command
     loop {
         print!("> ");
         io::stdout().flush()?;
-        let mut input = String::new();
+        input.clear();
         io::stdin().read_line(&mut input)?;
-        let input = input.trim();
 
-        match input {
-            "help" => {
+        match commands::parse_command(&input) {
+            Some(Command::Help) => {
                 // todo help message
                 println!("signup [username] [email] [password]");
                 println!("login [username] [password]");
@@ -30,30 +31,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("create_chat_room []");
                 println!("resume_chat_room []");
             }
-            command if input.starts_with("signup") => {
-                // hard-coded for testing
-
-                // todo validate input
-                let username = "yiduo";
-                let email = "ydjing121@gmail.com";
-                let password = "!Abcd";
+            Some(Command::Signup { username, email, password }) => {
+                
                 commands::signup(&client, username.to_string(), email.to_string(), password.to_string()).await?;
             }
-            command if input.starts_with("login") => {
+            Some(Command::Login { username, password }) => {
 
                 // login successfully
                 // todo setup websocket
             }
-            command if input.starts_with("logout") => {
+            Some(Command::Logout) => {
 
             }
             
-            "exit" => {
+            Some(Command::Quit) => {
                 // exit the app
                 println!("App is shutting down...");
+                println!("Bye!");
                 break;
             }
-            _ => {
+            None => {
                 println!("Unknown command. Type 'help' to see available commands.")
             }
         }

@@ -4,13 +4,44 @@ use validator::ValidateEmail;
 use regex::Regex;
 use reqwest::Client;
 
+
+#[derive(Debug)]
+pub enum Command {
+    Signup {
+        username: String,
+        email: String,
+        password: String
+    },
+    Login {
+        username: String,
+        password: String
+    },
+    Logout,
+    Help,
+    Quit
+}
+
+pub fn parse_command(input: &str) -> Option<Command>
+{
+    let input_list: Vec<&str> = input.trim().split_whitespace().collect();
+    match input_list.as_slice() {
+        ["signup", username, email, password] => Some(
+            Command::Signup { username: (username.to_string()), email: (email.to_string()), password: (password.to_string()) }),
+        ["login", username, password] => Some(
+            Command::Login { username: (username.to_string()), password: (password.to_string()) }),
+        ["logout"] => Some(Command::Logout),
+        ["help"] => Some(Command::Help),
+        ["exit"] => Some(Command::Quit),
+        _ => None
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 struct SignupInfo {
     username: String,
     email: String,
     password: String,
 }
-
 
 #[derive(Deserialize, Serialize)]
 struct UserLogin {
@@ -24,18 +55,18 @@ struct UserLogout {
     session_id: String,
 }
 
-fn is_valid_email_addr(email: &str) -> bool
+pub fn is_valid_email_addr(email: &str) -> bool
 {
     email.validate_email()
 }
 
-fn is_valid_username(username: &str) -> bool
+pub fn is_valid_username(username: &str) -> bool
 {
     let re = Regex::new(r"^(?=.{8,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$").unwrap();
     re.is_match(username)
 }
 
-fn is_valid_password(password: &str) -> bool
+pub fn is_valid_password(password: &str) -> bool
 {
     let re = Regex::new(r"/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/").unwrap();
     re.is_match(password)
