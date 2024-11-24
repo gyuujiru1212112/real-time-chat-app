@@ -1,16 +1,19 @@
 mod commands;
+mod user;
 
 use std::io::{self, Write};
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
 use reqwest::Client;
+use user::User;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Welcome to the real time chat app!");
     println!("Type 'help' to see available commands.");
-    // client
+    // client, input
     let client = Client::new();
     let mut input = String::new();
+    let mut user = User::new();
 
     // get the command
     loop {
@@ -45,19 +48,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                commands::signup(&client, username.to_string(),
+                user.signup(&client, username.to_string(),
                     email.to_string(),
                     password.to_string()).await?;
             }
             Some(Command::Login { username, password }) => {
-
-                // login successfully
+                user.login(&client, &username.to_string(), password.to_string()).await?;
+                
                 // todo setup websocket
             }
             Some(Command::Logout) => {
-
+                user.logout(&client).await?;
             }
-            
             Some(Command::Quit) => {
                 // exit the app
                 println!("App is shutting down...");

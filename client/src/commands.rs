@@ -1,8 +1,5 @@
-use rocket::serde::ser::StdError;
-use rocket::serde::{Deserialize, Serialize};
 use validator::ValidateEmail;
 use regex::Regex;
-use reqwest::Client;
 
 
 #[derive(Debug)]
@@ -36,25 +33,6 @@ pub fn parse_command(input: &str) -> Option<Command>
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct SignupInfo {
-    username: String,
-    email: String,
-    password: String,
-}
-
-#[derive(Deserialize, Serialize)]
-struct UserLogin {
-    username: String,
-    password: String,
-}
-
-#[derive(Deserialize, Serialize)]
-struct UserLogout {
-    username: String,
-    session_id: String,
-}
-
 pub fn is_valid_email_addr(email: &str) -> bool
 {
     let res = email.validate_email();
@@ -67,7 +45,7 @@ pub fn is_valid_email_addr(email: &str) -> bool
 
 pub fn is_valid_username(username: &str) -> bool
 {
-    let re = Regex::new(r"^[a-zA-Z][a-zA-Z0-9._]{7,19}[a-zA-Z0-9]$").unwrap();
+    let re = Regex::new(r"^[a-zA-Z][a-zA-Z0-9._]{4,19}[a-zA-Z0-9]$").unwrap();
     let res = re.is_match(username);
 
     if !res
@@ -75,7 +53,7 @@ pub fn is_valid_username(username: &str) -> bool
         println!("Error: Invalid username.");
         let rule = r#"
 The username must satisfy:
-1. Number of characters must be between 8 and 20.
+1. Number of characters must be between 5 and 20.
 2. Must start with a letter.
 3. Only alphanumeric characters (a-z, A-Z, 0-9), underscores (_) and dots (.) are allowed.
 4. No consecutive underscores or dots (e.g., __ or ..).
@@ -133,91 +111,64 @@ The password must satisfy:
     true
 }
 
-pub async fn signup(client: &Client, username: String, email: String, password: String) -> Result<(), Box<dyn StdError>>
-{
-    let url = "http://localhost:8000/chatapp/user/signup"; // signup endpoint
+// pub async fn signup(client: &Client, username: String, email: String, password: String) -> Result<(), Box<dyn StdError>>
+// {
+//     let url = "http://localhost:8000/chatapp/user/signup"; // signup endpoint
 
-    // Prepare the signup data
-    let signup_info = SignupInfo { username, email, password };
+//     // Prepare the signup data
+//     let signup_info = SignupInfo { username, email, password };
 
-    // Send the POST request
-    let response = client
-        .post(url)
-        .json(&signup_info)
-        .send()
-        .await?;
+//     // Send the POST request
+//     let response = client
+//         .post(url)
+//         .json(&signup_info)
+//         .send()
+//         .await?;
 
-    // Check if the response was successful
-    if response.status().is_success() {
-        println!("Signup successfully!");
-    } else {
-        let error_message = response.text().await?;
-        println!("Error: failed to signup user: {}.", error_message);
-    }
+//     // Check if the response was successful
+//     if response.status().is_success() {
+//         println!("Signup successfully!");
+//     } else {
+//         let error_message = response.text().await?;
+//         println!("Error: failed to signup user: {}.", error_message);
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
-async fn login(client: &Client, username: String, password: String) -> Result<(), Box<dyn StdError>>
-{
-    let url = "http://localhost:8000/chatapp/user/login";
-    let login_info = UserLogin { username, password };
+// pub async fn login(client: &Client, username: String, password: String) -> Result<(), Box<dyn StdError>>
+// {
+//     let url = "http://localhost:8000/chatapp/user/login";
+//     let login_info = UserLogin { username, password };
 
-    // Send the POST request
-    let response = client
-        .post(url)
-        .json(&login_info)
-        .send()
-        .await?;
+//     // Send the POST request
+//     let response = client
+//         .post(url)
+//         .json(&login_info)
+//         .send()
+//         .await?;
 
-    // Check if the response was successful
-    if response.status().is_success() {
-        // todo get the session id
-        println!("login successfully!");
-    } else {
-        let error_message = response.text().await?;
-        println!("Error: failed to login user: {}.", error_message);
-    }
+//     // Check if the response was successful
+//     if response.status().is_success() {
+//         println!("login successfully!");
+//         let json : Value = response.json().await.expect("Failed to parse JSON");
 
-    Ok(())
-}
+//         // get the session id
+//         if let Some(session_id) = json.get("session_id") {
+//             println!("session_id: {}", session_id);
+//         }
 
-async fn logout(client: &Client) -> Result<(), Box<dyn StdError>>
-{
-    // todo session id
-    Ok(())
-}
 
-async fn check_user_status(client: &Client, user: String) -> Result<(), Box<dyn StdError>>
-{
-    Ok(())
-}
+//     } else {
+//         let error_message = response.text().await?;
+//         println!("Error: failed to login user: {}.", error_message);
+//     }
 
-async fn list_active_users(client: &Client) -> Result<(), Box<dyn StdError>>
-{
-    Ok(())
-}
+//     Ok(())
+// }
 
-async fn create_private_chat(client: &Client, user: String) -> Result<(), Box<dyn StdError>>
-{
-    // todo enter a child CLI interface
-    Ok(())
-}
-
-async fn resume_private_chat(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>
-{
-    // todo enter a child CLI interface
-    Ok(())
-}
-
-async fn create_chat_room(client: &Client, room_name: String) -> Result<(), Box<dyn StdError>>
-{
-    // todo enter a child CLI interface
-    Ok(())
-}
-
-async fn resume_chat_room(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>
-{
-    // todo enter a child CLI interface
-    Ok(())
-}
+// async fn logout(client: &Client) -> Result<(), Box<dyn StdError>>
+// {
+//     // todo session id
+//     Ok(())
+// }

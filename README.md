@@ -35,7 +35,7 @@ CREATE TABLE user (
   - exit
 - Rules
   - The username must satisfy:
-    1. Number of characters must be between 8 and 20
+    1. Number of characters must be between 5 and 20
     2. Must start with a letter.
     3. Only alphanumeric characters (a-z, A-Z, 0-9), underscores (_) and dots (.) are allowed.
     4. No consecutive underscores or dots (e.g., __ or ..).
