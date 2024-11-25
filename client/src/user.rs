@@ -137,6 +137,7 @@ impl User {
 
         // Check if the response was successful
         if response.status().is_success() {
+            self.session = None;
             println!("Log out successfully!");
         } else {
             let error_message = response.text().await?;
