@@ -1,6 +1,6 @@
 use reqwest::Client;
 use rocket::serde::json::Value;
-use rocket::serde::{json, Deserialize, Serialize};
+use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::ser::StdError;
 
 #[derive(Serialize, Deserialize)]
@@ -120,7 +120,39 @@ impl User {
 
     pub async fn logout(&mut self, client: &Client) -> Result<(), Box<dyn StdError>>
     {
-        // todo session id
+        // check whether session exists
+        if self.session.is_none() {
+            println!("Please login first!");
+            return Ok(());
+        }
+
+        let url = "http://localhost:8000/chatapp/user/logout"; // endpoint
+
+        // Prepare the data
+        let session = self.session.as_mut().unwrap();
+        let logout_info = UserLogout {
+            username: session.username.clone(),
+            session_id: session.session_id.clone()
+        };
+
+        println!("{}", logout_info.username);
+        println!("{}", logout_info.session_id);
+
+        // Send the POST request
+        let response = client
+            .post(url)
+            .json(&logout_info)
+            .send()
+            .await?;
+
+        // Check if the response was successful
+        if response.status().is_success() {
+            println!("Log out successfully!");
+        } else {
+            let error_message = response.text().await?;
+            println!("Error: failed to log out user: {}.", error_message);
+        }
+
         Ok(())
     }
 
