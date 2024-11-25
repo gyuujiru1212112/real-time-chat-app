@@ -54,6 +54,13 @@ impl User {
 
     pub async fn signup(&mut self, client: &Client, username: String, email: String, password: String) -> Result<(), Box<dyn StdError>>
     {
+        // check whether session exists
+        if self.session.is_some() {
+            println!("You have already logged in!");
+            println!("Please log out first!");
+            return Ok(());
+        }
+
         let url = "http://localhost:8000/chatapp/user/signup"; // signup endpoint
 
         // Prepare the signup data
