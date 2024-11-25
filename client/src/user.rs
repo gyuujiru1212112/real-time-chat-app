@@ -103,11 +103,12 @@ impl User {
         if response.status().is_success() {
             let json : Value = response.json().await.expect("Failed to parse JSON");
 
-            // get the session id
-            if let Some(session_id) = json.get("session_id") {
-                // create the session
-                self.session = Some(Session::new(username, &session_id.to_string()));
-                println!("login successfully!");
+            if let Some(session_id) = json.get("session_id").and_then(|v| v.as_str()) {
+                // Create the session
+                self.session = Some(Session::new(username, session_id));
+                println!("Login successfully!");
+            } else {
+                println!("Failed to retrieve session_id from JSON response.");
             }
 
         } else {
@@ -134,9 +135,6 @@ impl User {
             username: session.username.clone(),
             session_id: session.session_id.clone()
         };
-
-        println!("{}", logout_info.username);
-        println!("{}", logout_info.session_id);
 
         // Send the POST request
         let response = client
