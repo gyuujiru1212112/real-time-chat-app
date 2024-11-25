@@ -52,15 +52,13 @@ impl User {
         }
     }
 
+    pub fn session_exists(&mut self) -> bool
+    {
+        self.session.is_some()
+    }
+
     pub async fn signup(&mut self, client: &Client, username: String, email: String, password: String) -> Result<(), Box<dyn StdError>>
     {
-        // check whether session exists
-        if self.session.is_some() {
-            println!("You have already logged in!");
-            println!("Please log out first!");
-            return Ok(());
-        }
-
         let url = "http://localhost:8000/chatapp/user/signup"; // signup endpoint
 
         // Prepare the signup data
@@ -86,13 +84,6 @@ impl User {
 
     pub async fn login(&mut self, client: &Client, username: &str, password: String) -> Result<(), Box<dyn StdError>>
     {
-        // check whether session exists
-        if self.session.is_some() {
-            println!("You have already logged in!");
-            println!("Please log out first before logging into another account!");
-            return Ok(());
-        }
-
         let url = "http://localhost:8000/chatapp/user/login";
         let login_info = UserLogin { 
             username: username.to_string(), 
@@ -128,12 +119,6 @@ impl User {
 
     pub async fn logout(&mut self, client: &Client) -> Result<(), Box<dyn StdError>>
     {
-        // check whether session exists
-        if self.session.is_none() {
-            println!("Please login first!");
-            return Ok(());
-        }
-
         let url = "http://localhost:8000/chatapp/user/logout"; // endpoint
 
         // Prepare the data

@@ -35,6 +35,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("resume_chat_room []");
             }
             Some(Command::Signup { username, email, password }) => {
+                // check whether session exists
+                if user.session_exists() {
+                    println!("You have already logged in!");
+                    println!("Please log out first!");
+                    continue;
+                }
+
                 if !is_valid_username(&username)
                 {
                     continue;
@@ -53,11 +60,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     password.to_string()).await?;
             }
             Some(Command::Login { username, password }) => {
+                // check whether session exists
+                if user.session_exists() {
+                    println!("You have already logged in!");
+                    println!("Please log out first before logging into another account!");
+                    continue;
+                }
+
                 user.login(&client, &username.to_string(), password.to_string()).await?;
                 
                 // todo setup websocket
             }
             Some(Command::Logout) => {
+                // check whether session exists
+                if !user.session_exists() {
+                    println!("Please login first!");
+                    continue;
+                }
+
                 user.logout(&client).await?;
             }
             Some(Command::Quit) => {
