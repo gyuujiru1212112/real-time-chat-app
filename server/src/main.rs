@@ -2,7 +2,7 @@ mod database;
 mod endpoints;
 
 use database::DbManager;
-use endpoints::user::{active_users, login, logout, signup};
+use endpoints::user::{active_users, login, logout, signup, user_status};
 use rocket::{launch, routes};
 
 #[launch]
@@ -13,6 +13,6 @@ async fn rocket() -> _ {
         .manage::<DbManager>(DbManager::new(db_url).await.unwrap())
         .mount(
             "/chatapp/user/",
-            routes![signup, login, logout, active_users],
+            routes![signup, login, logout, user_status, active_users],
         )
 }

@@ -96,8 +96,8 @@ pub async fn logout(user: Json<UserReqInfo>, db_manager: &rocket::State<DbManage
 }
 
 #[get("/status?<username..>")]
-pub async fn active_users(
-    username: Option<String>,
+pub async fn user_status(
+    username: String,
     user_info: UserReqInfo,
     db_manager: &rocket::State<DbManager>,
 ) -> (Status, String) {
@@ -109,48 +109,63 @@ pub async fn active_users(
     .await;
 
     if valid_session {
-        match username {
-            Some(name) => match db_manager.get_user(&name).await {
-                Some(user) => {
-                    let status = match user.session_id {
-                        Some(_) => "ACTIVE",
-                        None => "INACTIVE",
-                    };
-                    (
-                        Status::Ok,
-                        format!(
-                            "[{{\"username\": \"{}\", \"status\": \"{}\"}}]",
-                            user.username, status
-                        ),
-                    )
-                }
-                None => (
-                    Status::NotFound,
+        match db_manager.get_user(&username).await {
+            Some(user) => {
+                let status = match user.session_id {
+                    Some(_) => "ACTIVE",
+                    None => "INACTIVE",
+                };
+                (
+                    Status::Ok,
                     format!(
-                        "[{{\"username\": \"{}\", \"status\": \"NOT_FOUND\"}}]",
-                        name
+                        "[{{\"username\": \"{}\", \"status\": \"{}\"}}]",
+                        user.username, status
                     ),
+                )
+            }
+            None => (
+                Status::NotFound,
+                format!(
+                    "[{{\"username\": \"{}\", \"status\": \"NOT_FOUND\"}}]",
+                    username
                 ),
-            },
-            None => match db_manager.get_active_users().await {
-                Some(users) => {
-                    let mut ret_message = String::new();
-                    ret_message += "[";
-                    for user in users.iter() {
-                        ret_message += &format!(
-                            "{{\"username\": \"{}\", \"status\": \"ACTIVE\"}},",
-                            user.username
-                        );
-                    }
-                    ret_message.pop(); // Remove last character "," from the string.
-                    ret_message += "]";
-
-                    (Status::Ok, ret_message)
-                }
-                None => (Status::Ok, String::from("[]")),
-            },
+            ),
         }
     } else {
         (Status::Unauthorized, String::from(""))
+    }
+}
+
+#[get("/allactive")]
+pub async fn active_users(
+    user_info: UserReqInfo,
+    db_manager: &rocket::State<DbManager>,
+) -> (Status, String) {
+    let valid_session: bool = is_session_id_valid(
+        &user_info.username,
+        &user_info.session_id,
+        db_manager.inner(),
+    )
+    .await;
+
+    if valid_session {
+        match db_manager.get_active_users().await {
+            Some(users) => {
+                let mut ret_message = String::new();
+                ret_message += "[";
+                for user in users.iter() {
+                    ret_message += &format!(
+                        "{{\"username\": \"{}\", \"status\": \"ACTIVE\"}},",
+                        user.username
+                    );
+                }
+                ret_message.pop(); // Remove last character "," from the string.
+                ret_message += "]";
+                (Status::Ok, ret_message)
+            }
+            None => (Status::Ok, String::from("[]")),
+        }
+    } else {
+        (Status::Unauthorized, String::from("Invalid user"))
     }
 }
