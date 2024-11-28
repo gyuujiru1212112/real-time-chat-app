@@ -5,6 +5,7 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{launch, post, routes};
+use uuid::Uuid;
 
 #[derive(Deserialize, Serialize)]
 struct SignupInfo {
@@ -26,32 +27,93 @@ struct UserLogout {
 }
 
 #[post("/signup", format = "json", data = "<signup_info>")]
-fn signup<'a>(signup_info: Json<SignupInfo>) -> Status {
-    println!("signup username: {}", signup_info.username);
-    println!("signup email: {}", signup_info.email);
-    println!("signup password: {}", signup_info.password);
-    Status::Created
+async fn signup<'a>(
+    signup_info: Json<SignupInfo>,
+    db_manager: &rocket::State<DbManager>,
+) -> Status {
+    let success: bool = db_manager
+        .insert_user(
+            &signup_info.username,
+            &signup_info.email,
+            &signup_info.password,
+        )
+        .await;
+    if success {
+        println!("User created");
+        Status::Created
+    } else {
+        println!("Failed to create user {}", signup_info.username);
+        Status::InternalServerError
+    }
 }
 
 #[post("/login", format = "json", data = "<user_login>")]
-fn login(user_login: Json<UserLogin>) -> Status {
-    println!("login username: {}", user_login.username);
-    println!("login password: {}", user_login.password);
-    Status::Ok
+async fn login(
+    user_login: Json<UserLogin>,
+    db_manager: &rocket::State<DbManager>,
+) -> (Status, String) {
+    match db_manager.get_user(&user_login.username).await {
+        Some(user) => {
+            if user.password != user_login.password {
+                (
+                    Status::Unauthorized,
+                    String::from("{\"message\": \"Login Failed\"}"),
+                )
+            } else {
+                let session_id: String = Uuid::new_v4().to_string();
+                let success = db_manager
+                    .set_user_session_id(&user_login.username, &session_id)
+                    .await;
+                if success {
+                    let response_body = format!(
+                        "{{\"message\": \"Success\", \"session_id\": \"{}\"}}",
+                        session_id
+                    );
+                    (Status::Ok, response_body)
+                } else {
+                    (
+                        Status::InternalServerError,
+                        String::from("{\"message\": \"Login Failed\"}"),
+                    )
+                }
+            }
+        }
+        None => (
+            Status::Unauthorized,
+            String::from("{\"message\": \"Login Failed\"}"),
+        ),
+    }
 }
 
 #[post("/logout", format = "json", data = "<user_logout>")]
-fn logout(user_logout: Json<UserLogout>) -> Status {
-    println!("logout username: {}", user_logout.username);
-    println!("logout session_id: {}", user_logout.session_id);
-    Status::Ok
+async fn logout(user_logout: Json<UserLogout>, db_manager: &rocket::State<DbManager>) -> Status {
+    match db_manager.get_user(&user_logout.username).await {
+        Some(user) => match user.session_id {
+            Some(session_id) => {
+                if session_id != user_logout.session_id {
+                    Status::Unauthorized
+                } else {
+                    let success = db_manager
+                        .set_user_session_id(&user_logout.username, &String::new())
+                        .await;
+                    if success {
+                        Status::Ok
+                    } else {
+                        Status::InternalServerError
+                    }
+                }
+            }
+            None => Status::Unauthorized,
+        },
+        None => Status::Unauthorized,
+    }
 }
 
 #[launch]
 #[tokio::main]
 async fn rocket() -> _ {
-    let db_url: String = String::from("");
-    let mut db_manager = DbManager::new(db_url);
-    db_manager.connect().await;
-    rocket::build().mount("/chatapp/user/", routes![signup, login, logout])
+    let db_url: String = String::from("mysql://chatserver:ServerPass123@localhost:3306/chatapp");
+    rocket::build()
+        .manage::<DbManager>(DbManager::new(db_url).await.unwrap())
+        .mount("/chatapp/user/", routes![signup, login, logout])
 }

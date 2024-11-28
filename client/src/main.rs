@@ -1,25 +1,29 @@
 mod commands;
+mod user;
 
 use std::io::{self, Write};
+use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
 use reqwest::Client;
+use user::User;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Welcome to the real time chat app!");
     println!("Type 'help' to see available commands.");
-    // client
+    // client, input
     let client = Client::new();
+    let mut input = String::new();
+    let mut user = User::new();
 
     // get the command
     loop {
         print!("> ");
         io::stdout().flush()?;
-        let mut input = String::new();
+        input.clear();
         io::stdin().read_line(&mut input)?;
-        let input = input.trim();
 
-        match input {
-            "help" => {
+        match commands::parse_command(&input) {
+            Some(Command::Help) => {
                 // todo help message
                 println!("signup [username] [email] [password]");
                 println!("login [username] [password]");
@@ -30,30 +34,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("create_chat_room []");
                 println!("resume_chat_room []");
             }
-            command if input.starts_with("signup") => {
-                // hard-coded for testing
+            Some(Command::Signup { username, email, password }) => {
+                // check whether session exists
+                if user.session_exists() {
+                    println!("You have already logged in!");
+                    println!("Please log out first!");
+                    continue;
+                }
 
-                // todo validate input
-                let username = "yiduo";
-                let email = "ydjing121@gmail.com";
-                let password = "!Abcd";
-                commands::signup(&client, username.to_string(), email.to_string(), password.to_string()).await?;
+                if !is_valid_username(&username)
+                {
+                    continue;
+                }
+                if !is_valid_email_addr(&email)
+                {
+                    continue;
+                }
+                if !is_valid_password(&password)
+                {
+                    continue;
+                }
+
+                user.signup(&client, username.to_string(),
+                    email.to_string(),
+                    password.to_string()).await?;
             }
-            command if input.starts_with("login") => {
+            Some(Command::Login { username, password }) => {
+                // check whether session exists
+                if user.session_exists() {
+                    println!("You have already logged in!");
+                    println!("Please log out first before logging into another account!");
+                    continue;
+                }
 
-                // login successfully
+                user.login(&client, &username.to_string(), password.to_string()).await?;
+                
                 // todo setup websocket
             }
-            command if input.starts_with("logout") => {
+            Some(Command::Logout) => {
+                // check whether session exists
+                if !user.session_exists() {
+                    println!("Please login first!");
+                    continue;
+                }
 
+                user.logout(&client).await?;
             }
-            
-            "exit" => {
+            Some(Command::Quit) => {
                 // exit the app
                 println!("App is shutting down...");
+                println!("Bye!");
                 break;
             }
-            _ => {
+            None => {
                 println!("Unknown command. Type 'help' to see available commands.")
             }
         }
