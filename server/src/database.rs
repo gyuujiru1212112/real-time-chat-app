@@ -42,10 +42,18 @@ impl DbManager {
         }
     }
 
-    pub async fn set_user_session_id(&self, username: &String, session_id: &String) -> bool {
+    pub async fn set_user_session_id(
+        &self,
+        username: &String,
+        session_id: Option<&String>,
+    ) -> bool {
+        let session_id_value = match session_id {
+            Some(id) => format!("\"{}\"", id),
+            None => String::from("null"),
+        };
         let query = format!(
-            "UPDATE user SET session_id = \"{}\" WHERE username = \"{}\";",
-            session_id, username
+            "UPDATE user SET session_id = {} WHERE username = \"{}\";",
+            session_id_value, username
         );
         let result = sqlx::query(&query).execute(&self.conn_pool).await;
         match result {
@@ -66,6 +74,20 @@ impl DbManager {
             Ok(user) => Some(user),
             Err(e) => {
                 println!("Error querying user table for {} : {}", username, e);
+                None
+            }
+        }
+    }
+
+    pub async fn get_active_users(&self) -> Option<Vec<User>> {
+        let query = "SELECT * FROM user WHERE session_id IS NOT NULL and session_id != \"\";";
+        let result = sqlx::query_as::<_, User>(&query)
+            .fetch_all(&self.conn_pool)
+            .await;
+        match result {
+            Ok(users) => Some(users),
+            Err(e) => {
+                println!("Error querying user table: {}", e);
                 None
             }
         }
