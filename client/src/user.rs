@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{header, Client, Url};
 use rocket::serde::json::Value;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::ser::StdError;
@@ -20,12 +20,6 @@ struct UserLogin {
 struct UserLogout {
     username: String,
     session_id: String,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct UserReqInfo {
-    pub username: String,
-    pub session_id: String,
 }
 
 #[derive(Debug)]
@@ -153,8 +147,32 @@ impl User {
         Ok(())
     }
 
-    async fn check_user_status(&mut self, client: &Client, user: String) -> Result<(), Box<dyn StdError>>
+    pub async fn check_user_status(&mut self, client: &Client, user: String) -> Result<(), Box<dyn StdError>>
     {
+        let url = "http://localhost:8000/chatapp/user/status";
+        let url = Url::parse_with_params(url, &[("username", user.clone())])?;
+
+        let session = self.session.as_mut().unwrap();
+        let mut headers = header::HeaderMap::new();
+        headers.insert("username", header::HeaderValue::from_str(&session.username)?);
+        headers.insert("session_id", header::HeaderValue::from_str(&session.session_id)?);
+
+        let response = client
+            .get(url)
+            .headers(headers) // Add the headers
+            .send()
+            .await?;
+
+        // Check if the response was successful
+        if response.status().is_success() {
+            // display the status
+            let user_status = response.text().await.expect("Failed to get user status");
+            println!("The status of user {} is {}", user, user_status);
+        } else {
+            let error_message = response.text().await?;
+            println!("Error: failed to retrieve user's status: {}.", error_message);
+        }
+
         Ok(())
     }
 

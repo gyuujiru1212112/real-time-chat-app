@@ -33,15 +33,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match commands::parse_command(&input) {
                     Some(Command::Help) => {
                         // todo help message
+                        println!("Show help message: help");
                         println!("Signup: signup [username] [email] [password]");
                         println!("Login: login [username] [password]");
                         println!("Logout: logout");
                         println!("List all active users: list-all");
                         println!("Check the status based on username: check [username]");
-                        println!("create_private_chat []");
-                        println!("resume_private_chat []");
-                        println!("create_chat_room []");
-                        println!("resume_chat_room []");
+                        println!("Create private chat: []");
+                        println!("Resume private chat: []");
+                        println!("Create chat room: []");
+                        println!("Resume chat room: []");
                     }
                     Some(Command::Signup { username, email, password }) => {
                         // check whether session exists
@@ -96,6 +97,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             println!("Please login first!");
                             continue;
                         }
+
+                        user.check_user_status(&client, username).await?;
                     }
                     Some(Command::Quit) => {
                         // logout first
