@@ -14,6 +14,10 @@ pub enum Command {
         password: String
     },
     Logout,
+    ListActiveUsers,
+    CheckUserStatus {
+        username: String // the user that we want to check
+    },
     Help,
     Quit
 }
@@ -27,6 +31,10 @@ pub fn parse_command(input: &str) -> Option<Command>
         ["login", username, password] => Some(
             Command::Login { username: (username.to_string()), password: (password.to_string()) }),
         ["logout"] => Some(Command::Logout),
+        ["list-all"] => Some(Command::ListActiveUsers),
+        ["check", username] => Some(
+            Command::CheckUserStatus { username: (username.to_string()) }
+        ),
         ["help"] => Some(Command::Help),
         ["exit"] => Some(Command::Quit),
         _ => None
