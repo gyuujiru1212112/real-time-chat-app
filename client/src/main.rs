@@ -81,6 +81,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 user.logout(&client).await?;
             }
             Some(Command::Quit) => {
+                // logout first
+                if user.session_exists() {
+                    user.logout(&client).await?;
+                }
+                
                 // exit the app
                 println!("App is shutting down...");
                 println!("Bye!");
