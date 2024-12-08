@@ -28,11 +28,14 @@ CREATE TABLE user (
 
 ## Client
 - Commands
-  - signup [username] [email] [password]
-  - login [username] [password]
-  - logout
-  - help
-  - exit
+  - Show help message: `help`
+  - Signup: `signup [username] [email] [password]`
+  - Login: `login [username] [password]`
+  - Logout: `logout`
+  - List all the active users: `list-all`
+  - Check the status based on username: `check [username]`
+  - Quit the program: `exit`
+
 - Rules
   - The username must satisfy:
     1. Number of characters must be between 5 and 20
