@@ -3,14 +3,14 @@ mod user;
 mod common;
 
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
-use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_success_msg, print_warning_error_msg};
+use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_msg, print_warning_error_msg};
 use reqwest::Client;
 use user::User;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    print_success_msg("Welcome to the real time chat app!");
-    print_success_msg("Type 'help' to see available commands.");
+    print_msg("Welcome to the real time chat app!");
+    print_msg("Type 'help' to see available commands.");
     // client, input
     let mut rl = rustyline::Editor::<()>::new();
     let mut current_mode = "main";
@@ -29,8 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 // exit the app
-                print_success_msg("App is shutting down...");
-                print_success_msg("Bye!");
+                print_msg("App is shutting down...");
+                print_msg("Bye!");
                 break;
             }
             Ok(input) => {
@@ -114,8 +114,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let res = user.create_private_chat(&client, with_user.clone()).await?;
                                 if res {
                                     current_mode = "child";
-                                    let enter_msg = format!("Entering private chat with {}", with_user);
-                                    print_success_msg(&enter_msg);
+                                    let enter_msg = format!("Entering private chat with {}...", with_user);
+                                    print_msg(&enter_msg);
                                     prompt = format!("Me ({}): ", user.get_user_name());
                                 }
                             }
@@ -127,8 +127,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let res = user.create_chat_room(&client, name.clone(), &users).await?;
                                 if res {
                                     current_mode = "child";
-                                    let enter_msg = format!("Entering chat room {}", name);
-                                    print_success_msg(&enter_msg);
+                                    let enter_msg = format!("Entering chat room {}...", name);
+                                    print_msg(&enter_msg);
                                     prompt = format!("Me ({}): ", user.get_user_name());
                                 }
                             }
@@ -139,8 +139,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
         
                                 // exit the app
-                                print_success_msg("App is shutting down...");
-                                print_success_msg("Bye!");
+                                print_msg("App is shutting down...");
+                                print_msg("Bye!");
                                 break;
                             }
                             None => {
@@ -151,7 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "child" => {
                         if input == "exit" {
                             current_mode = "main";
-                            print_success_msg("Exiting the chat interface...");
+                            print_msg("Exiting the chat interface...");
                             prompt = format!("{} >> ", user.get_user_name());
                         } else {
                             // todo messaging

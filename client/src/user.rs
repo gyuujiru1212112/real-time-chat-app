@@ -146,7 +146,9 @@ impl User {
         let url = "http://localhost:8000/chatapp/user/logout"; // endpoint
 
         // Prepare the data
-        let session = self.session.as_mut().unwrap();
+        let session = self.session
+            .as_ref()
+            .unwrap();
         let logout_info = UserLogout {
             username: session.username.clone(),
             session_id: session.session_id.clone()
@@ -176,7 +178,9 @@ impl User {
         let url = "http://localhost:8000/chatapp/user/status";
         let url = Url::parse_with_params(url, &[("username", user.clone())])?;
 
-        let session = self.session.as_mut().unwrap();
+        let session = self.session
+            .as_ref()
+            .unwrap();
         let mut headers = header::HeaderMap::new();
         headers.insert("username", header::HeaderValue::from_str(&session.username)?);
         headers.insert("session_id", header::HeaderValue::from_str(&session.session_id)?);
@@ -203,7 +207,9 @@ impl User {
     pub async fn list_active_users(&mut self, client: &Client) -> Result<(), Box<dyn StdError>>
     {
         let url = "http://localhost:8000/chatapp/user/allactive"; // endpoint
-        let session = self.session.as_mut().unwrap();
+        let session = self.session
+            .as_ref()
+            .unwrap();
 
         // Send the GET request with headers
         let response = client
@@ -235,7 +241,9 @@ impl User {
 
     pub async fn create_private_chat(&mut self, client: &Client, user: String) -> Result<bool, Box<dyn StdError>>
     {
-        let session = self.session.as_mut().unwrap();
+        let session = self.session
+            .as_ref()
+            .unwrap();
         if user == session.username {
             print_warning_error_msg("You are not allowed to create a private chat with yourself");
             return Ok(false);
@@ -268,13 +276,16 @@ impl User {
 
     async fn resume_private_chat(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>
     {
-        // todo enter a child CLI interface
         Ok(())
     }
 
     pub async fn create_chat_room(&mut self, client: &Client, room_name: String, members: &Vec<String>) -> Result<bool, Box<dyn StdError>>
     {
-        let session = self.session.as_mut().unwrap();
+        let session = self.session
+            .as_ref()
+            .unwrap();
+
+        // remove duplicate members using HashSet
         let mut members_to_pass: HashSet<String> = HashSet::new();
         members_to_pass.extend(members.clone());
         if members_to_pass.is_empty() {
@@ -287,7 +298,6 @@ impl User {
             print_warning_error_msg("You are not allowed to create a group chat with yourself");
             return Ok(false);
         }
-
 
         let info = ChatRoomInfo {
             name: room_name.clone(),
@@ -315,7 +325,6 @@ impl User {
 
     async fn resume_chat_room(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>
     {
-        // todo enter a child CLI interface
         Ok(())
     }
 }

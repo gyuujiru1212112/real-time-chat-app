@@ -9,7 +9,7 @@ pub fn print_user_name_rule() {
     4. No consecutive underscores or dots (e.g., __ or ..).
     5. No underscore or dot at the end.
     "#;
-    println!("{}", rule.green());   
+    println!("{}", rule.red());   
 }
 
 pub fn print_password_rule() {
@@ -24,11 +24,11 @@ pub fn print_password_rule() {
     - Digits (0-9).
     - Special characters (!@#$%^&*).
     "#;
-    println!("{}", password_rule.green());
+    println!("{}", password_rule.red());
 }
 
 pub fn print_help_msg_by_default() {
-    println!("{}", "Commands:".green());
+    println!("{}", "Commands:".cyan());
     println!("Show help message: {}", "help".cyan());
     println!("Signup: {}", "signup [username] [email] [password]".cyan());
     println!("Login: {}", "login [username] [password]".cyan());
@@ -38,7 +38,7 @@ pub fn print_help_msg_by_default() {
 }
 
 pub fn print_help_msg_after_login() {
-    println!("{}", "Commands:".green());
+    println!("{}", "Commands:".cyan());
     println!("Show help message: {}", "help".cyan());
     println!("Logout: {}", "logout".cyan());
     println!("List all active users: {}", "list-all".cyan());
@@ -53,7 +53,7 @@ pub fn print_warning_error_msg(msg: &str) {
     println!("{}", msg.red());
 }
 
-pub fn print_success_msg(msg: &str) {
+pub fn print_msg(msg: &str) {
     println!("{}", msg.green());
 }
 
