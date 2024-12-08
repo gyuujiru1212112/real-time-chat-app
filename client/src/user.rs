@@ -1,7 +1,11 @@
+use std::collections::HashSet;
+
 use reqwest::{header, Client, Url};
 use rocket::serde::json::Value;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::ser::StdError;
+
+use crate::common::print_warning_error_msg;
 
 #[derive(Serialize, Deserialize)]
 struct SignupInfo {
@@ -20,6 +24,18 @@ struct UserLogin {
 struct UserLogout {
     username: String,
     session_id: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ChatRoomInfo {
+    name: String,
+    users: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct PrivateChatInfo {
+    user1: String,
+    user2: String
 }
 
 #[derive(Debug)]
@@ -52,6 +68,13 @@ impl User {
         }
     }
 
+    pub fn get_user_name(&self) -> String {
+        self.session
+            .as_ref()
+            .map(|session| session.username.clone())
+            .unwrap_or_else(|| String::from(""))
+    }
+
     pub fn session_exists(&mut self) -> bool
     {
         self.session.is_some()
@@ -76,13 +99,13 @@ impl User {
             println!("Signup successfully!");
         } else {
             let error_message = response.text().await?;
-            println!("Error: failed to signup user: {}.", error_message);
+            println!("Error: failed to signup user: '{}'.", error_message);
         }
 
         Ok(())
     }
 
-    pub async fn login(&mut self, client: &Client, username: &str, password: String) -> Result<(), Box<dyn StdError>>
+    pub async fn login(&mut self, client: &Client, username: &str, password: String) -> Result<bool, Box<dyn StdError>>
     {
         let url = "http://localhost:8000/chatapp/user/login";
         let login_info = UserLogin { 
@@ -105,19 +128,20 @@ impl User {
                 // Create the session
                 self.session = Some(Session::new(username, session_id));
                 println!("Login successfully!");
+                Ok(true)
             } else {
                 println!("Failed to retrieve session_id from JSON response.");
+                Ok(false)
             }
 
         } else {
             let error_message = response.text().await?;
             println!("Error: failed to login user: {}.", error_message);
+            Ok(false)
         }
-
-        Ok(())
     }
 
-    pub async fn logout(&mut self, client: &Client) -> Result<(), Box<dyn StdError>>
+    pub async fn logout(&mut self, client: &Client) -> Result<bool, Box<dyn StdError>>
     {
         let url = "http://localhost:8000/chatapp/user/logout"; // endpoint
 
@@ -139,12 +163,12 @@ impl User {
         if response.status().is_success() {
             self.session = None;
             println!("Log out successfully!");
+            Ok(true)
         } else {
             let error_message = response.text().await?;
             println!("Error: failed to log out user: {}.", error_message);
+            Ok(false)
         }
-
-        Ok(())
     }
 
     pub async fn check_user_status(&mut self, client: &Client, user: String) -> Result<(), Box<dyn StdError>>
@@ -167,7 +191,7 @@ impl User {
         if response.status().is_success() {
             // display the status
             let user_status = response.text().await.expect("Failed to get user status");
-            println!("The status of user {} is {}", user, user_status);
+            println!("The status of user '{}' is {}", user, user_status);
         } else {
             let error_message = response.text().await?;
             println!("Error: failed to retrieve user's status: {}.", error_message);
@@ -209,10 +233,37 @@ impl User {
         Ok(())
     }
 
-    async fn create_private_chat(client: &Client, user: String) -> Result<(), Box<dyn StdError>>
+    pub async fn create_private_chat(&mut self, client: &Client, user: String) -> Result<bool, Box<dyn StdError>>
     {
-        // todo enter a child CLI interface
-        Ok(())
+        let session = self.session.as_mut().unwrap();
+        if user == session.username {
+            print_warning_error_msg("You are not allowed to create a private chat with yourself");
+            return Ok(false);
+        }
+
+        let url = "http://localhost:8000/chatapp/chat/private-chat"; // endpoint
+        
+        let info = PrivateChatInfo {
+            user1: session.username.clone(),
+            user2: user.clone()
+        };
+        // Send the POST request
+        let response = client
+            .post(url)
+            .json(&info)
+            .send()
+            .await?;
+
+        // Check if the response was successful
+        if response.status().is_success() {
+            println!("You created a private chat with user '{}' successfully!", user);
+            Ok(true)
+
+        } else {
+            let error_message = response.text().await?;
+            println!("Error: failed to create a private chat with user '{}': {}.", user, error_message);
+            Ok(false)
+        }
     }
 
     async fn resume_private_chat(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>
@@ -221,10 +272,45 @@ impl User {
         Ok(())
     }
 
-    async fn create_chat_room(client: &Client, room_name: String) -> Result<(), Box<dyn StdError>>
+    pub async fn create_chat_room(&mut self, client: &Client, room_name: String, members: &Vec<String>) -> Result<bool, Box<dyn StdError>>
     {
-        // todo enter a child CLI interface
-        Ok(())
+        let session = self.session.as_mut().unwrap();
+        let mut members_to_pass: HashSet<String> = HashSet::new();
+        members_to_pass.extend(members.clone());
+        if members_to_pass.is_empty() {
+            print_warning_error_msg("You are not allowed to create a group chat without members");
+            return Ok(false);
+        }
+
+        members_to_pass.insert(session.username.clone());
+        if members_to_pass.len() == 1 {
+            print_warning_error_msg("You are not allowed to create a group chat with yourself");
+            return Ok(false);
+        }
+
+
+        let info = ChatRoomInfo {
+            name: room_name.clone(),
+            users: members_to_pass.into_iter().collect()
+        };
+
+        let url = "http://localhost:8000/chatapp/chat/chat-room"; // endpoint
+        // Send the POST request
+        let response = client
+            .post(url)
+            .json(&info)
+            .send()
+            .await?;
+
+        // Check if the response was successful
+        if response.status().is_success() {
+            println!("You created a chat room '{}' successfully!", room_name);
+            Ok(true)
+        } else {
+            let error_message = response.text().await?;
+            println!("Error: failed to create a chat room '{}': {}.", room_name, error_message);
+            Ok(false)
+        }
     }
 
     async fn resume_chat_room(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>>

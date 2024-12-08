@@ -1,22 +1,26 @@
 mod commands;
 mod user;
+mod common;
 
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
+use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_success_msg, print_warning_error_msg};
 use reqwest::Client;
 use user::User;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Welcome to the real time chat app!");
-    println!("Type 'help' to see available commands.");
+    print_success_msg("Welcome to the real time chat app!");
+    print_success_msg("Type 'help' to see available commands.");
     // client, input
     let mut rl = rustyline::Editor::<()>::new();
+    let mut current_mode = "main";
     let client = Client::new();
     let mut user = User::new();
+    let mut prompt = String::from(">> ");
 
     // get the command
     loop {
-        let readline = rl.readline(">> ");
+        let readline = rl.readline(&prompt);
         match readline {
             Err(_) => {
                 // logout first
@@ -25,97 +29,138 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 // exit the app
-                println!("App is shutting down...");
-                println!("Bye!");
+                print_success_msg("App is shutting down...");
+                print_success_msg("Bye!");
                 break;
             }
             Ok(input) => {
-                match commands::parse_command(&input) {
-                    Some(Command::Help) => {
-                        // todo help message
-                        println!("Show help message: help");
-                        println!("Signup: signup [username] [email] [password]");
-                        println!("Login: login [username] [password]");
-                        println!("Logout: logout");
-                        println!("List all active users: list-all");
-                        println!("Check the status based on username: check [username]");
-                        println!("Create private chat: []");
-                        println!("Resume private chat: []");
-                        println!("Create chat room: []");
-                        println!("Resume chat room: []");
+                rl.add_history_entry(input.clone());
+
+                match current_mode {
+                    "main" => {
+                        match commands::parse_command(&input) {
+                            Some(Command::Help) => {
+                                if user.session_exists() {
+                                    print_help_msg_after_login();
+                                } else {
+                                    print_help_msg_by_default();
+                                }
+                            }
+                            Some(Command::Signup { username, email, password }) => {
+                                // check whether session exists
+                                if user.session_exists() {
+                                    print_warning_error_msg("You have already logged in!");
+                                    print_warning_error_msg("Please log out first!");
+                                    continue;
+                                }
+        
+                                if !is_valid_username(&username) || !is_valid_email_addr(&email) || !is_valid_password(&password)
+                                {
+                                    continue;
+                                }
+        
+                                user.signup(&client, username.to_string(),
+                                    email.to_string(),
+                                    password.to_string()).await?;
+                            }
+                            Some(Command::Login { username, password }) => {
+                                // check whether session exists
+                                if user.session_exists() {
+                                    print_session_exists_error_msg();
+                                    continue;
+                                }
+        
+                                let res = user.login(&client, &username.to_string(), password.to_string()).await?;
+                                if res {
+                                    prompt = format!("{} >> ", user.get_user_name());
+                                }
+                            }
+                            Some(Command::Logout) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+        
+                                let res = user.logout(&client).await?;
+                                if res {
+                                    prompt = String::from(">> ");
+                                }
+                            }
+                            Some(Command::ListActiveUsers) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+        
+                                user.list_active_users(&client).await?;
+                            }
+                            Some(Command::CheckUserStatus { username }) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+        
+                                user.check_user_status(&client, username).await?;
+                            }
+                            Some(Command::CreatePrivateChat { with_user }) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                let res = user.create_private_chat(&client, with_user.clone()).await?;
+                                if res {
+                                    current_mode = "child";
+                                    let enter_msg = format!("Entering private chat with {}", with_user);
+                                    print_success_msg(&enter_msg);
+                                    prompt = format!("Me ({}): ", user.get_user_name());
+                                }
+                            }
+                            Some(Command::CreateChatRoom { name, users }) => {
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                let res = user.create_chat_room(&client, name.clone(), &users).await?;
+                                if res {
+                                    current_mode = "child";
+                                    let enter_msg = format!("Entering chat room {}", name);
+                                    print_success_msg(&enter_msg);
+                                    prompt = format!("Me ({}): ", user.get_user_name());
+                                }
+                            }
+                            Some(Command::Quit) => {
+                                // logout first
+                                if user.session_exists() {
+                                    user.logout(&client).await?;
+                                }
+        
+                                // exit the app
+                                print_success_msg("App is shutting down...");
+                                print_success_msg("Bye!");
+                                break;
+                            }
+                            None => {
+                                print_warning_error_msg("Unknown command. Type 'help' to see available commands.")
+                            }
+                        }
                     }
-                    Some(Command::Signup { username, email, password }) => {
-                        // check whether session exists
-                        if user.session_exists() {
-                            println!("You have already logged in!");
-                            println!("Please log out first!");
-                            continue;
+                    "child" => {
+                        if input == "exit" {
+                            current_mode = "main";
+                            print_success_msg("Exiting the chat interface...");
+                            prompt = String::from(">> ");
+                        } else {
+                            // todo messaging
                         }
-
-                        if !is_valid_username(&username) || !is_valid_email_addr(&email) || !is_valid_password(&password)
-                        {
-                            continue;
-                        }
-
-                        user.signup(&client, username.to_string(),
-                            email.to_string(),
-                            password.to_string()).await?;
                     }
-                    Some(Command::Login { username, password }) => {
-                        // check whether session exists
-                        if user.session_exists() {
-                            println!("You have already logged in!");
-                            println!("Please log out first before logging into another account!");
-                            continue;
-                        }
-
-                        user.login(&client, &username.to_string(), password.to_string()).await?;
+                    _ => {
                         
-                        // todo setup websocket
-                    }
-                    Some(Command::Logout) => {
-                        // check whether session exists
-                        if !user.session_exists() {
-                            println!("Please login first!");
-                            continue;
-                        }
-
-                        user.logout(&client).await?;
-                    }
-                    Some(Command::ListActiveUsers) => {
-                        // check whether session exists
-                        if !user.session_exists() {
-                            println!("Please login first!");
-                            continue;
-                        }
-
-                        user.list_active_users(&client).await?;
-                    }
-                    Some(Command::CheckUserStatus { username }) => {
-                        // check whether session exists
-                        if !user.session_exists() {
-                            println!("Please login first!");
-                            continue;
-                        }
-
-                        user.check_user_status(&client, username).await?;
-                    }
-                    Some(Command::Quit) => {
-                        // logout first
-                        if user.session_exists() {
-                            user.logout(&client).await?;
-                        }
-
-                        // exit the app
-                        println!("App is shutting down...");
-                        println!("Bye!");
-                        break;
-                    }
-                    None => {
-                        println!("Unknown command. Type 'help' to see available commands.")
                     }
                 }
-                rl.add_history_entry(input.clone());
             }
         }
     }

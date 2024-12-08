@@ -31,10 +31,10 @@ pub async fn create_private_chat<'a>(
         ).await;
 
         if success {
-            println!("Private chat created between {} and {}", private_chat_info.user1, private_chat_info.user2);
+            println!("Private chat created between users '{}' and '{}'", private_chat_info.user1, private_chat_info.user2);
             Status::Created
         } else {
-            println!("Failed to create a private chat between {} and {}", private_chat_info.user1, private_chat_info.user2);
+            println!("Failed to create a private chat between users '{}' and '{}'", private_chat_info.user1, private_chat_info.user2);
             Status::InternalServerError
         }
 
@@ -52,10 +52,10 @@ pub async fn create_chat_room<'a>(
         )
         .await;
     if success {
-        println!("Chat room {} created", chat_room_info.name);
+        println!("Chat room '{}' created", chat_room_info.name);
         Status::Created
     } else {
-        println!("Failed to create chat room {}.", chat_room_info.name);
+        println!("Failed to create chat room '{}'.", chat_room_info.name);
         Status::InternalServerError
     }
 }
