@@ -152,7 +152,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if input == "exit" {
                             current_mode = "main";
                             print_success_msg("Exiting the chat interface...");
-                            prompt = String::from(">> ");
+                            prompt = format!("{} >> ", user.get_user_name());
                         } else {
                             // todo messaging
                         }
