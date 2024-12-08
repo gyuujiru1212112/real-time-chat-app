@@ -45,7 +45,7 @@ impl DbManager {
 
     pub async fn insert_chat_room(&self, name: &str, users: &Vec<String>) -> bool {
         if users.is_empty() {
-            println!("Cannot create the chat room {} without members", name);
+            println!("Cannot create the chat room '{}' without members", name);
             return false
         }
         // insert the chat room
@@ -58,7 +58,7 @@ impl DbManager {
             {
                 Ok(result) => result.last_insert_id(),
                 Err(e) => {
-                    println!("Error inserting chat room {} : {}", name, e.to_string());
+                    println!("Error inserting chat room '{}' : {}", name, e.to_string());
                     return false
                 }
             };

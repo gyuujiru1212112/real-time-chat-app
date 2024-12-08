@@ -122,9 +122,9 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/user/allactive:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allactive' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private_chat
+- /chatapp/chat/private_chat:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat' --header 'Content-Type: application/json' --data '{"user1": "ydjing121", "user2":"jingyidu122"}'`
-- /chatapp/chat/chat_room
+- /chatapp/chat/chat_room:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room' --header 'Content-Type: application/json' --data '{"name": "group1", "users":["ydjing121", "jingyidu122"]}'`
 
 
