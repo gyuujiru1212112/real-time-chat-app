@@ -1,10 +1,8 @@
-use std::collections::HashSet;
-
-use clap::error;
 use reqwest::{header, Client, Url};
 use rocket::serde::json::Value;
 use rocket::serde::ser::StdError;
 use rocket::serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 use crate::common::{print_msg, print_warning_error_msg};
 
@@ -104,7 +102,7 @@ impl User {
                 }
             }
             Err(error) => {
-                let msg = format!("Error: failed to signup: {}.", error);
+                let msg = format!("Error: failed to signup: {}.", error.to_string());
                 print_warning_error_msg(&msg);
             }
         }
@@ -150,7 +148,7 @@ impl User {
                 }
             }
             Err(error) => {
-                let msg = format!("Error: failed to login: {}.", error);
+                let msg = format!("Error: failed to login: {}.", error.to_string());
                 print_warning_error_msg(&msg);
                 Ok(false)
             }
@@ -174,7 +172,7 @@ impl User {
                 // Check if the response was successful
                 if status.is_success() {
                     self.session = None;
-                    println!("Log out successfully!");
+                    print_msg("Log out successfully!");
                     Ok(true)
                 } else {
                     let msg = format!("Error: failed to logout: {}.", status);
@@ -184,8 +182,8 @@ impl User {
             }
             Err(error) => {
                 let msg = format!("Error: failed to logout: {}.", error.to_string());
-                    print_warning_error_msg(&msg);
-                    Ok(false)
+                print_warning_error_msg(&msg);
+                Ok(false)
             }
         }
     }
@@ -209,23 +207,33 @@ impl User {
             header::HeaderValue::from_str(&session.session_id)?,
         );
 
-        let response = client
+        // Send the GET request
+        match client
             .get(url)
             .headers(headers) // Add the headers
             .send()
-            .await?;
-
-        // Check if the response was successful
-        if response.status().is_success() {
-            // display the status
-            let user_status = response.text().await.expect("Failed to get user status");
-            println!("The status of user '{}' is {}", user, user_status);
-        } else {
-            let error_message = response.text().await?;
-            println!(
-                "Error: failed to retrieve user's status: {}.",
-                error_message
-            );
+            .await
+        {
+            Ok(response) => {
+                let status = response.status();
+                // Check if the response was successful
+                if status.is_success() {
+                    // display the status
+                    let user_status = response.text().await.expect("Failed to get user status.");
+                    let msg = format!("The status of user '{}' is {}", user, user_status);
+                    print_msg(&msg);
+                } else {
+                    let msg = format!("Error: failed to retrieve user's status: {}.", status);
+                    print_warning_error_msg(&msg);
+                }
+            }
+            Err(error) => {
+                let msg = format!(
+                    "Error: failed to retrieve user's status: {}.",
+                    error.to_string()
+                );
+                print_warning_error_msg(&msg);
+            }
         }
 
         Ok(())
@@ -236,31 +244,43 @@ impl User {
         let session = self.session.as_ref().unwrap();
 
         // Send the GET request with headers
-        let response = client
+        match client
             .get(url)
             .header("username", &session.username)
             .header("session_id", &session.session_id)
             .send()
-            .await?;
+            .await
+        {
+            Ok(response) => {
+                let status = response.status();
+                if status.is_success() {
+                    // display the users
+                    let json: Value = response.json().await.expect("Failed to parse JSON");
+                    if let Some(array) = json.as_array() {
+                        let users: Vec<String> = array
+                            .iter()
+                            .filter_map(|item| item.as_str().map(|s| s.to_string()))
+                            .collect();
 
-        // Check if the response was successful
-        if response.status().is_success() {
-            // display the users
-            let json: Value = response.json().await.expect("Failed to parse JSON");
-            if let Some(array) = json.as_array() {
-                let users: Vec<String> = array
-                    .iter()
-                    .filter_map(|item| item.as_str().map(|s| s.to_string()))
-                    .collect();
-
-                println!("The active users: {:?}", users);
-            } else {
-                eprintln!("Response is not an array of strings.");
+                        let msg = format!("The active users: {:?}", users);
+                        print_msg(&msg);
+                    } else {
+                        print_warning_error_msg("Response is not an array of strings.");
+                    }
+                } else {
+                    let msg = format!("Error: failed to retrieve active users: {}.", status);
+                    print_warning_error_msg(&msg);
+                }
             }
-        } else {
-            let error_message = response.text().await?;
-            println!("Error: failed to retrieve active users: {}.", error_message);
+            Err(error) => {
+                let msg = format!(
+                    "Error: failed to retrieve active users: {}.",
+                    error.to_string()
+                );
+                print_warning_error_msg(&msg);
+            }
         }
+
         Ok(())
     }
 
@@ -281,23 +301,38 @@ impl User {
             user1: session.username.clone(),
             user2: user.clone(),
         };
-        // Send the POST request
-        let response = client.post(url).json(&info).send().await?;
 
-        // Check if the response was successful
-        if response.status().is_success() {
-            println!(
-                "You created a private chat with user '{}' successfully!",
-                user
-            );
-            Ok(true)
-        } else {
-            let error_message = response.text().await?;
-            println!(
-                "Error: failed to create a private chat with user '{}': {}.",
-                user, error_message
-            );
-            Ok(false)
+        // Send the POST request
+        match client.post(url).json(&info).send().await {
+            Ok(response) => {
+                let status = response.status();
+
+                // Check if the response was successful
+                if status.is_success() {
+                    let msg = format!(
+                        "You created a private chat with user '{}' successfully!",
+                        user
+                    );
+                    print_msg(&msg);
+                    Ok(true)
+                } else {
+                    let msg = format!(
+                        "Error: failed to create a private chat with user '{}': {}.",
+                        user, status
+                    );
+                    print_warning_error_msg(&msg);
+                    Ok(false)
+                }
+            }
+            Err(error) => {
+                let msg = format!(
+                    "Error: failed to create a private chat with user '{}': {}.",
+                    user,
+                    error.to_string()
+                );
+                print_warning_error_msg(&msg);
+                Ok(false)
+            }
         }
     }
 
@@ -333,20 +368,34 @@ impl User {
         };
 
         let url = "http://localhost:8000/chatapp/chat/chat-room"; // endpoint
-                                                                  // Send the POST request
-        let response = client.post(url).json(&info).send().await?;
-
-        // Check if the response was successful
-        if response.status().is_success() {
-            println!("You created a chat room '{}' successfully!", room_name);
-            Ok(true)
-        } else {
-            let error_message = response.text().await?;
-            println!(
-                "Error: failed to create a chat room '{}': {}.",
-                room_name, error_message
-            );
-            Ok(false)
+        
+        // Send the POST request
+        match client.post(url).json(&info).send().await {
+            Ok(response) => {
+                let status = response.status();
+                // Check if the response was successful
+                if status.is_success() {
+                    let msg = format!("You created a chat room '{}' successfully!", room_name);
+                    print_msg(&msg);
+                    Ok(true)
+                } else {
+                    let msg = format!(
+                        "Error: failed to create a chat room '{}': {}.",
+                        room_name, status
+                    );
+                    print_warning_error_msg(&msg);
+                    Ok(false)
+                }
+            }
+            Err(error) => {
+                let msg = format!(
+                    "Error: failed to create a chat room '{}': {}.",
+                    room_name,
+                    error.to_string()
+                );
+                print_warning_error_msg(&msg);
+                Ok(false)
+            }
         }
     }
 
