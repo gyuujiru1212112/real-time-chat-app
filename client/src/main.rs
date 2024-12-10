@@ -5,6 +5,7 @@ mod common;
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
 use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_msg, print_warning_error_msg};
 use reqwest::Client;
+use rustyline::history;
 use user::User;
 
 #[tokio::main]
@@ -12,7 +13,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     print_msg("Welcome to the real time chat app!");
     print_msg("Type 'help' to see available commands.");
     // client, input
+    let history_file = "history.txt";
     let mut rl = rustyline::Editor::<()>::new();
+    let _ = rl.load_history(history_file);
+
     let mut current_mode = "main";
     let client = Client::new();
     let mut user = User::new();
@@ -171,6 +175,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
+    rl.save_history(history_file)?;
     Ok(())
 }
