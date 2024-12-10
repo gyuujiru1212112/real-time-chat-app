@@ -105,7 +105,7 @@ CREATE TABLE room_member (
   - Signup: `signup [username] [email] [password]`
   - Login: `login [username] [password]`
   - Logout: `logout`
-  - List all the active users: `list-active-users`
+  - List all the users: `list-users`
   - Check the status based on username: `check [username]`
   - Create private chat with a user: `private-chat [with_user_name]`
   - Resume private chat: `[]`

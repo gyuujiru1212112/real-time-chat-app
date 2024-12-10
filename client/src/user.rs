@@ -32,6 +32,12 @@ pub struct ChatRoomInfo {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct ChatRoom {
+    id: String,
+    name: String,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct PrivateChatInfo {
     user1: String,
     user2: String,
@@ -97,13 +103,14 @@ impl User {
                 if status.is_success() {
                     print_msg("Signup successfully!");
                 } else {
-                    let msg = format!("Error: failed to signup: {}.", status);
-                    print_warning_error_msg(&msg);
+                    print_warning_error_msg(&format!("Error: failed to signup: {}.", status));
                 }
             }
             Err(error) => {
-                let msg = format!("Error: failed to signup: {}.", error.to_string());
-                print_warning_error_msg(&msg);
+                print_warning_error_msg(&format!(
+                    "Error: failed to signup: {}.",
+                    error.to_string()
+                ));
             }
         }
 
@@ -142,15 +149,11 @@ impl User {
                         Ok(false)
                     }
                 } else {
-                    let msg = format!("Error: failed to login: {}.", status);
-                    print_warning_error_msg(&msg);
-                    Ok(false)
+                    self.error_response(&format!("Error: failed to login: {}.", status))
                 }
             }
             Err(error) => {
-                let msg = format!("Error: failed to login: {}.", error.to_string());
-                print_warning_error_msg(&msg);
-                Ok(false)
+                self.error_response(&format!("Error: failed to login: {}.", error.to_string()))
             }
         }
     }
@@ -175,15 +178,11 @@ impl User {
                     print_msg("Log out successfully!");
                     Ok(true)
                 } else {
-                    let msg = format!("Error: failed to logout: {}.", status);
-                    print_warning_error_msg(&msg);
-                    Ok(false)
+                    self.error_response(&format!("Error: failed to logout: {}.", status))
                 }
             }
             Err(error) => {
-                let msg = format!("Error: failed to logout: {}.", error.to_string());
-                print_warning_error_msg(&msg);
-                Ok(false)
+                self.error_response(&format!("Error: failed to logout: {}.", error.to_string()))
             }
         }
     }
@@ -220,19 +219,19 @@ impl User {
                 if status.is_success() {
                     // display the status
                     let user_status = response.text().await.expect("Failed to get user status.");
-                    let msg = format!("The status of user '{}' is {}", user, user_status);
-                    print_msg(&msg);
+                    print_msg(&format!("The status of user '{}' is {}", user, user_status));
                 } else {
-                    let msg = format!("Error: failed to retrieve user's status: {}.", status);
-                    print_warning_error_msg(&msg);
+                    print_warning_error_msg(&format!(
+                        "Error: failed to retrieve user's status: {}.",
+                        status
+                    ));
                 }
             }
             Err(error) => {
-                let msg = format!(
+                print_warning_error_msg(&format!(
                     "Error: failed to retrieve user's status: {}.",
                     error.to_string()
-                );
-                print_warning_error_msg(&msg);
+                ));
             }
         }
 
@@ -262,22 +261,22 @@ impl User {
                             .filter_map(|item| item.as_str().map(|s| s.to_string()))
                             .collect();
 
-                        let msg = format!("The active users: {:?}", users);
-                        print_msg(&msg);
+                        print_msg(&format!("The active users: {:?}", users));
                     } else {
                         print_warning_error_msg("Response is not an array of strings.");
                     }
                 } else {
-                    let msg = format!("Error: failed to retrieve active users: {}.", status);
-                    print_warning_error_msg(&msg);
+                    print_warning_error_msg(&format!(
+                        "Error: failed to retrieve active users: {}.",
+                        status
+                    ));
                 }
             }
             Err(error) => {
-                let msg = format!(
+                print_warning_error_msg(&format!(
                     "Error: failed to retrieve active users: {}.",
                     error.to_string()
-                );
-                print_warning_error_msg(&msg);
+                ));
             }
         }
 
@@ -309,30 +308,22 @@ impl User {
 
                 // Check if the response was successful
                 if status.is_success() {
-                    let msg = format!(
+                    self.ok_response(&format!(
                         "You created a private chat with user '{}' successfully!",
                         user
-                    );
-                    print_msg(&msg);
-                    Ok(true)
+                    ))
                 } else {
-                    let msg = format!(
+                    self.error_response(&format!(
                         "Error: failed to create a private chat with user '{}': {}.",
                         user, status
-                    );
-                    print_warning_error_msg(&msg);
-                    Ok(false)
+                    ))
                 }
             }
-            Err(error) => {
-                let msg = format!(
-                    "Error: failed to create a private chat with user '{}': {}.",
-                    user,
-                    error.to_string()
-                );
-                print_warning_error_msg(&msg);
-                Ok(false)
-            }
+            Err(error) => self.error_response(&format!(
+                "Error: failed to create a private chat with user '{}': {}.",
+                user,
+                error.to_string()
+            )),
         }
     }
 
@@ -348,58 +339,92 @@ impl User {
     ) -> Result<bool, Box<dyn StdError>> {
         let session = self.session.as_ref().unwrap();
 
-        // remove duplicate members using HashSet
-        let mut members_to_pass: HashSet<String> = HashSet::new();
-        members_to_pass.extend(members.clone());
-        if members_to_pass.is_empty() {
-            print_warning_error_msg("You are not allowed to create a group chat without members");
-            return Ok(false);
+        let mut unique_members: HashSet<String> = members.iter().cloned().collect();
+        if unique_members.is_empty() {
+            return self
+                .error_response("You are not allowed to create a group chat without members");
         }
 
-        members_to_pass.insert(session.username.clone());
-        if members_to_pass.len() == 1 {
-            print_warning_error_msg("You are not allowed to create a group chat with yourself");
-            return Ok(false);
+        unique_members.insert(session.username.clone());
+        if unique_members.len() == 1 {
+            return self.error_response("You are not allowed to create a group chat with yourself");
         }
 
-        let info = ChatRoomInfo {
+        let chat_room_info = ChatRoomInfo {
             name: room_name.clone(),
-            users: members_to_pass.into_iter().collect(),
+            users: unique_members.into_iter().collect(),
         };
 
         let url = "http://localhost:8000/chatapp/chat/chat-room"; // endpoint
-        
+
         // Send the POST request
-        match client.post(url).json(&info).send().await {
+        match client.post(url).json(&chat_room_info).send().await {
             Ok(response) => {
-                let status = response.status();
-                // Check if the response was successful
-                if status.is_success() {
+                if response.status().is_success() {
                     let msg = format!("You created a chat room '{}' successfully!", room_name);
                     print_msg(&msg);
                     Ok(true)
                 } else {
-                    let msg = format!(
-                        "Error: failed to create a chat room '{}': {}.",
-                        room_name, status
-                    );
-                    print_warning_error_msg(&msg);
-                    Ok(false)
+                    self.error_response(&format!(
+                        "Failed to create chat room '{}': {}.",
+                        room_name,
+                        response.status()
+                    ))
                 }
             }
-            Err(error) => {
-                let msg = format!(
-                    "Error: failed to create a chat room '{}': {}.",
-                    room_name,
-                    error.to_string()
-                );
-                print_warning_error_msg(&msg);
-                Ok(false)
-            }
+            Err(error) => self.error_response(&format!(
+                "Failed to create chat room '{}': {}.",
+                room_name, error
+            )),
         }
     }
 
     async fn resume_chat_room(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>> {
         Ok(())
+    }
+
+    pub async fn list_all_chat_rooms(&self, client: &Client) -> Result<(), Box<dyn StdError>> {
+        let url = "http://localhost:8000/chatapp/chat/all-chatroom"; // endpoint
+
+        // Send the GET request with headers
+        match client.get(url).send().await {
+            Ok(response) => {
+                let status = response.status();
+                if status.is_success() {
+                    let chat_rooms: Vec<ChatRoom> =
+                        response.json().await.expect("Failed to parse JSON");
+                    if chat_rooms.is_empty() {
+                        println!("No chat rooms.");
+                    } else {
+                        for room in chat_rooms {
+                            println!("ID: {}, Name: {}", room.id, room.name);
+                        }
+                    }
+                } else {
+                    print_warning_error_msg(&format!(
+                        "Error: failed to retrieve chat rooms: {}.",
+                        status
+                    ));
+                }
+            }
+            Err(error) => {
+                print_warning_error_msg(&format!(
+                    "Error: failed to retrieve chat rooms: {}.",
+                    error.to_string()
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn ok_response(&self, message: &str) -> Result<bool, Box<dyn StdError>> {
+        print_msg(message);
+        Ok(true)
+    }
+
+    fn error_response(&self, message: &str) -> Result<bool, Box<dyn StdError>> {
+        print_warning_error_msg(message);
+        Ok(false)
     }
 }

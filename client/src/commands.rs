@@ -26,6 +26,7 @@ pub enum Command {
         name: String,
         users: Vec<String> // current user included
     },
+    ListAllChatRooms,
     Help,
     Quit
 }
@@ -39,7 +40,7 @@ pub fn parse_command(input: &str) -> Option<Command>
         ["login", username, password] => Some(
             Command::Login { username: (username.to_string()), password: (password.to_string()) }),
         ["logout"] => Some(Command::Logout),
-        ["list-all"] => Some(Command::ListActiveUsers),
+        ["list-users"] => Some(Command::ListActiveUsers),
         ["check", username] => Some(
             Command::CheckUserStatus { username: (username.to_string()) }
         ),
@@ -48,6 +49,7 @@ pub fn parse_command(input: &str) -> Option<Command>
             let user_list: Vec<String> = users.iter().map(|&user| user.to_string()).collect();
             Some(Command::CreateChatRoom { name: (name.to_string()), users: (user_list) })
         },
+        ["list-chat-rooms"] => Some(Command::ListAllChatRooms),
         ["help"] => Some(Command::Help),
         ["exit"] => Some(Command::Quit),
         _ => None

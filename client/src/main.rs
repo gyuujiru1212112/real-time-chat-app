@@ -132,6 +132,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     prompt = format!("Me ({}): ", user.get_user_name());
                                 }
                             }
+                            Some(Command::ListAllChatRooms) => {
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                user.list_all_chat_rooms(&client).await?;
+                            }
                             Some(Command::Quit) => {
                                 // logout first
                                 if user.session_exists() {
