@@ -128,7 +128,7 @@ pub async fn user_status(
 }
 
 #[get("/allusers")]
-pub async fn active_users(
+pub async fn all_users(
     user_info: UserReqInfo,
     db_manager: &rocket::State<DbManager>,
 ) -> (Status, Json<Vec<UserStatus>>) {

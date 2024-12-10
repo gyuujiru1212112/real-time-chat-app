@@ -108,9 +108,10 @@ CREATE TABLE room_member (
   - List all the users: `list-users`
   - Check the status based on username: `check [username]`
   - Create private chat with a user: `private-chat [with_user_name]`
-  - Resume private chat: `[]`
+  - Resume private chat: `resume-chat []`
   - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
   - Join an existing chat room: `[]`
+  - List private chat partners: `list-chat-partners`
   - List existing chat rooms: `list-chat-rooms`
   - Quit the program: `exit`
 
@@ -142,9 +143,6 @@ CREATE TABLE room_member (
 | /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
 | /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE"<br>or "INACTIVE"<br>or "NOT_FOUND" |
 | /chatapp/user/allusers | GET | username,<br>session_id | N/A | ["\<user1>", "\<user2>"...] |
-| /chatapp/chat/private-chat | POST | N/A | {"user1":"", "user2":""} | N/A |
-| /chatapp/chat/chat-room | POST | N/A | {"name":"", "users":["", ""]} | N/A |
-| /chatapp/chat/all-chatroom | GET | N/A | N/A | N/A|
 
 Sample Curl Requests
 
@@ -157,13 +155,7 @@ Sample Curl Requests
 - /chatapp/user/status?username:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/user/allusers:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/allactive' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private_chat:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat' --header 'Content-Type: application/json' --data '{"user1": "ydjing121", "user2":"jingyidu122"}'`
-- /chatapp/chat/chat_room:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room' --header 'Content-Type: application/json' --data '{"name": "group1", "users":["ydjing121", "jingyidu122"]}'`
-- /chatapp/chat/all-chatroom:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/all-chatroom'`
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 
 

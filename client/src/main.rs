@@ -5,7 +5,6 @@ mod common;
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
 use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_msg, print_warning_error_msg};
 use reqwest::Client;
-use rustyline::history;
 use user::User;
 
 #[tokio::main]
