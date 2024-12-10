@@ -55,13 +55,17 @@ impl Broker {
         println!("Subscribed user {} to topic {}", username, topic);
     }
 
-    async fn publish(&self, topic: String, message: String) {
+    async fn publish(&self, user_msg: UserMessage) {
         let mut subscribers = self.subscribers.lock().unwrap();
-        let msg: Message = Message::text(message.clone());
 
-        if let Some(topic_subscribers) = subscribers.get_mut(&topic) {
+        let msg: Message = Message::text(serde_json::to_string(&user_msg).unwrap());
+
+        if let Some(topic_subscribers) = subscribers.get_mut(&user_msg.topic) {
             for subscriber in topic_subscribers.iter_mut() {
-                println!("subscriber to topic {}: {}", topic, subscriber.username);
+                println!(
+                    "subscriber to topic {}: {}",
+                    user_msg.topic, subscriber.username
+                );
                 let _ = subscriber.sender.send(msg.clone());
             }
         }
@@ -97,7 +101,7 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
                 Some(text) => match serde_json::from_str::<UserMessage>(text) {
                     Ok(user_msg) => {
                         println!("Publishing received message...");
-                        broker.publish(user_msg.topic, user_msg.content).await;
+                        broker.publish(user_msg).await;
                     }
                     Err(e) => println!("Oops: {}", e),
                 },
