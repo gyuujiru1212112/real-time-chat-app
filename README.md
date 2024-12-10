@@ -26,7 +26,7 @@ To achieve this, the application will employ the **WebSocket communication proto
   - Sign up to create a new user
   - Show help messages
   - Login and logout
-  - View a list of other users with an "active" status
+  - View a list of other users with their status
   - Check the activity status of a specific user based on their username
   - Create a new private chat
   - Resume an existing private chat
@@ -141,7 +141,7 @@ CREATE TABLE room_member (
 | /chatapp/user/login | POST | N/A | {"username": "", "password": ""} | {"message": "Success", "session_id": ""} |
 | /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
 | /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE"<br>or "INACTIVE"<br>or "NOT_FOUND" |
-| /chatapp/user/allactive | GET | username,<br>session_id | N/A | ["\<user1>", "\<user2>"...] |
+| /chatapp/user/allusers | GET | username,<br>session_id | N/A | ["\<user1>", "\<user2>"...] |
 | /chatapp/chat/private-chat | POST | N/A | {"user1":"", "user2":""} | N/A |
 | /chatapp/chat/chat-room | POST | N/A | {"name":"", "users":["", ""]} | N/A |
 | /chatapp/chat/all-chatroom | GET | N/A | N/A | N/A|
@@ -156,7 +156,7 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
 - /chatapp/user/status?username:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allactive:
+- /chatapp/user/allusers:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allactive' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/chat/private_chat:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat' --header 'Content-Type: application/json' --data '{"user1": "ydjing121", "user2":"jingyidu122"}'`

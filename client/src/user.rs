@@ -26,6 +26,12 @@ struct UserLogout {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct UserStatus {
+    username: String,
+    status: String,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct ChatRoomInfo {
     name: String,
     users: Vec<String>,
@@ -238,8 +244,8 @@ impl User {
         Ok(())
     }
 
-    pub async fn list_active_users(&mut self, client: &Client) -> Result<(), Box<dyn StdError>> {
-        let url = "http://localhost:8000/chatapp/user/allactive"; // endpoint
+    pub async fn list_users(&mut self, client: &Client) -> Result<(), Box<dyn StdError>> {
+        let url = "http://localhost:8000/chatapp/user/allusers"; // endpoint
         let session = self.session.as_ref().unwrap();
 
         // Send the GET request with headers
@@ -253,28 +259,25 @@ impl User {
             Ok(response) => {
                 let status = response.status();
                 if status.is_success() {
-                    // display the users
-                    let json: Value = response.json().await.expect("Failed to parse JSON");
-                    if let Some(array) = json.as_array() {
-                        let users: Vec<String> = array
-                            .iter()
-                            .filter_map(|item| item.as_str().map(|s| s.to_string()))
-                            .collect();
-
-                        print_msg(&format!("The active users: {:?}", users));
+                    let users: Vec<UserStatus> =
+                        response.json().await.expect("Failed to parse JSON");
+                    if users.is_empty() {
+                        print_warning_error_msg("Error: failed to get users.");
                     } else {
-                        print_warning_error_msg("Response is not an array of strings.");
+                        for user in users {
+                            print_msg(&format!("user: {}, status: {}", user.username, user.status));
+                        }
                     }
                 } else {
                     print_warning_error_msg(&format!(
-                        "Error: failed to retrieve active users: {}.",
+                        "Error: failed to retrieve users: {}.",
                         status
                     ));
                 }
             }
             Err(error) => {
                 print_warning_error_msg(&format!(
-                    "Error: failed to retrieve active users: {}.",
+                    "Error: failed to retrieve users: {}.",
                     error.to_string()
                 ));
             }
@@ -394,10 +397,10 @@ impl User {
                     let chat_rooms: Vec<ChatRoom> =
                         response.json().await.expect("Failed to parse JSON");
                     if chat_rooms.is_empty() {
-                        println!("No chat rooms.");
+                        print_msg("No chat rooms.");
                     } else {
                         for room in chat_rooms {
-                            println!("ID: {}, Name: {}", room.id, room.name);
+                            print_msg(&format!("ID: {}, Name: {}", room.id, room.name));
                         }
                     }
                 } else {

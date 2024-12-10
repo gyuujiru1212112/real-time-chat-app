@@ -139,8 +139,8 @@ impl DbManager {
         }
     }
 
-    pub async fn get_active_users(&self) -> Option<Vec<User>> {
-        let query = "SELECT * FROM user WHERE session_id IS NOT NULL and session_id != \"\";";
+    pub async fn get_all_users(&self) -> Option<Vec<User>> {
+        let query = "SELECT * FROM user;";
         let result = sqlx::query_as::<_, User>(&query)
             .fetch_all(&self.conn_pool)
             .await;

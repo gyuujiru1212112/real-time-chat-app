@@ -19,6 +19,12 @@ pub struct UserLogin {
     password: String,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct UserStatus {
+    username: String,
+    status: String,
+}
+
 #[post("/signup", format = "json", data = "<signup_info>")]
 pub async fn signup<'a>(
     signup_info: Json<SignupInfo>,
@@ -121,11 +127,11 @@ pub async fn user_status(
     }
 }
 
-#[get("/allactive")]
+#[get("/allusers")]
 pub async fn active_users(
     user_info: UserReqInfo,
     db_manager: &rocket::State<DbManager>,
-) -> (Status, String) {
+) -> (Status, Json<Vec<UserStatus>>) {
     let valid_session: bool = is_session_id_valid(
         &user_info.username,
         &user_info.session_id,
@@ -134,20 +140,28 @@ pub async fn active_users(
     .await;
 
     if valid_session {
-        match db_manager.get_active_users().await {
+        match db_manager.get_all_users().await {
             Some(users) => {
-                let mut ret_message = String::new();
-                ret_message += "[";
-                for user in users.iter() {
-                    ret_message += &format!("\"{}\",", user.username);
-                }
-                ret_message.pop(); // Remove last character "," from the string.
-                ret_message += "]";
-                (Status::Ok, ret_message)
+                let res: Vec<UserStatus> = users
+                    .iter()
+                    .map(|user| {
+                        let status = if user.session_id.is_some() {
+                            "ACTIVE"
+                        } else {
+                            "INACTIVE"
+                        };
+
+                        UserStatus {
+                            username: user.username.clone(),
+                            status: status.to_string(),
+                        }
+                    })
+                    .collect();
+                (Status::Ok, Json(res))
             }
-            None => (Status::Ok, String::from("[]")),
+            None => (Status::Ok, Json(vec![])),
         }
     } else {
-        (Status::Unauthorized, String::from("Invalid user"))
+        (Status::Unauthorized, Json(vec![]))
     }
 }

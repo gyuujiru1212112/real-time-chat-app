@@ -87,14 +87,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     prompt = String::from(">> ");
                                 }
                             }
-                            Some(Command::ListActiveUsers) => {
+                            Some(Command::ListUsers) => {
                                 // check whether session exists
                                 if !user.session_exists() {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
         
-                                user.list_active_users(&client).await?;
+                                user.list_users(&client).await?;
                             }
                             Some(Command::CheckUserStatus { username }) => {
                                 // check whether session exists

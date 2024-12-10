@@ -74,7 +74,7 @@ pub async fn get_all_chat_rooms(
             let res: Vec<ChatRoom> = rooms.iter().map(|room| {
                 ChatRoom {
                     id: room.0.clone(),
-                    name: room.1.clone(), // Assuming room.1 is a String
+                    name: room.1.clone(),
                 }
             }).collect();
             (Status::Ok, Json(res))
