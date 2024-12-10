@@ -4,17 +4,47 @@ This is the final project for ECE1724H F1 LEC0101 20249:Special Topics in Softwa
 Kayleigh McNeil [1001278164], Yiduo Jing [1000308142]
 Contact: yiduo.jing@mail.utoronto.ca
 
-## Motivation
+## Motivation and Objectives
 
-## Objective
+Developing a real-time chat application offers our team an exciting opportunity to deepen our understanding and practice a range of advanced concepts and techniques in Rust. The project's primary focus is to design a robust system capable of supporting real-time communication, which will require the application of messaging patterns and concurrency principles—two areas we are eager to explore.  
 
-## Features: What are the main features offered by the final project deliverable?
+One of the key technical challenges is implementing a **publish-subscribe messaging pattern** to ensure all users in a chat room receive messages in the same order and in real time. This pattern is well-suited for handling messaging involving multiple users in a dynamic and scalable manner, making it critical for supporting large chat rooms effectively.  
+
+Another important aspect is the use of **concurrency in Rust**. On the server side, concurrency will enable the handling of simultaneous user requests, database interactions, and the seamless operation of the publish-subscribe messaging service. On the client side, concurrency will allow users to send and receive messages simultaneously, ensuring that sending a message does not interrupt the ability to receive messages from others.  
+
+The overall objective of this project is to create a **real-time chat application** that supports two types of communication:  
+1. **Private chats** between two users.  
+2. **Chat rooms** where multiple users can participate simultaneously.  
+
+To achieve this, the application will employ the **WebSocket communication protocol** to enable real-time messaging and incorporate the publish-subscribe pattern to maintain message consistency and delivery order. By undertaking this project, we aim to gain hands-on experience with real-world challenges in messaging systems, concurrency, and Rust's ecosystem, all while delivering a functional and efficient chat application.  
+
+## Features:
+- The ability to create new users
+- Authenticate users with a simple username and password combination
+- A command-line interface that allows a user to execute actions when running the application
+- Users will have the ability to execute the following command-line actions:
+  - Sign up to create a new user
+  - Show help messages
+  - Login and logout
+  - View a list of other users with an "active" status
+  - Check the activity status of a specific user based on their username
+  - Create a new private chat
+  - Resume an existing private chat
+  - Create a new chat room
+  - Join an existing chat room
+  - List existing chat rooms
+  - Exit from a private chat or chat room
+  - Send and receive messages in real-time in:
+    - A private chat between two users
+    - A chat room with many active users
+- View chat history when resuming a private chat or joining an existing chat room
+- A publish-subscribe messaging service that clients connect to using Websockets for bidirectional communication of messages
 
 ## User’s (or Developer’s) Guide: How does a user — or developer, if the project is a crate — use each of the main features in the project deliverable?
 
-## Reproducibility Guide: What are the commands needed to set up the runtime environment, if any, and to build the project, so that its features can be used by a user or a developer? Note: The instructor will follow the steps you have included in this section, step-by-step, with no deviation. The instructor has access to a Ubuntu Linux server and a macOS Sonoma laptop computer.
+## Reproducibility Guide:
 
-## MySQL Database
+### MySQL Database
 
 (Adding some quick notes here for now. Will tidy them up later.)
 
@@ -68,7 +98,7 @@ CREATE TABLE room_member (
 ```
 
 
-## Client
+### Client
 - Start the client program: `cargo run -p client`
 - Commands available inside the program:
   - Show help message: `help`
@@ -96,9 +126,9 @@ CREATE TABLE room_member (
        - Digits (0-9).
        - Special characters (!@#$%^&*).
 
-## Server
+### Server
 
-### API Endpoints
+#### API Endpoints
 
 | Route | Method | Headers | Body Parameters | Return Body |
 | -------- | ------- | ------- | ------- | ------- |
@@ -128,6 +158,10 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room' --header 'Content-Type: application/json' --data '{"name": "group1", "users":["ydjing121", "jingyidu122"]}'`
 
 
-## Contributions by each team member: What were the individual contributions by each member in the team?
+
+## Contributions by each team member:
+Kayleigh McNeil:
+Yiduo Jing:
+
 
 ## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.
