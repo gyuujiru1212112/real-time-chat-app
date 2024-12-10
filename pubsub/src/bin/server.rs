@@ -8,6 +8,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 use tokio_websockets::{Message, ServerBuilder, WebSocketStream};
 
+const PUBSUB_HOST_PORT: &str = "127.0.0.1:8080";
+
 #[derive(Deserialize, Serialize)]
 struct SubscriptionMessage {
     topic: String,
@@ -62,11 +64,10 @@ impl Broker {
 
         if let Some(topic_subscribers) = subscribers.get_mut(&user_msg.topic) {
             for subscriber in topic_subscribers.iter_mut() {
-                println!(
-                    "subscriber to topic {}: {}",
-                    user_msg.topic, subscriber.username
-                );
-                let _ = subscriber.sender.send(msg.clone());
+                // Send to all subscribers except for the sender itself.
+                if subscriber.username != user_msg.sender {
+                    let _ = subscriber.sender.send(msg.clone());
+                }
             }
         }
     }
@@ -121,12 +122,12 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let broker: Broker = Broker::default();
 
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+    let listener = TcpListener::bind(PUBSUB_HOST_PORT).await?;
     println!("listening on port 8080");
 
     loop {
-        let (socket, addr) = listener.accept().await?;
-        println!("New connection from {addr:?}");
+        let (socket, _) = listener.accept().await?;
+        // println!("New connection from {addr:?}");
         let cloned_broker = broker.clone();
         let ws_stream = ServerBuilder::new().accept(socket).await?;
         tokio::spawn(handle_connection(cloned_broker, ws_stream));
