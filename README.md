@@ -70,7 +70,7 @@ CREATE TABLE user (
 * Create the `private_chat` table:
 ```
 CREATE TABLE private_chat (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user1 VARCHAR(255) NOT NULL,
     user2 VARCHAR(255) NOT NULL,
     FOREIGN KEY (user1) REFERENCES user(username) ON DELETE CASCADE,
@@ -81,15 +81,15 @@ CREATE TABLE private_chat (
 * Create the `chat_room` table:
 ```
 CREATE TABLE chat_room (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL
 );
 ```
 * Create the `room_member` table:
 ```
 CREATE TABLE room_member (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    room_id INT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id BIGINT NOT NULL,
     username VARCHAR(255)  NOT NULL,
     FOREIGN KEY (room_id) REFERENCES chat_room(id) ON DELETE CASCADE,
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE,
@@ -105,8 +105,13 @@ CREATE TABLE room_member (
   - Signup: `signup [username] [email] [password]`
   - Login: `login [username] [password]`
   - Logout: `logout`
-  - List all the active users: `list-all`
+  - List all the active users: `list-active-users`
   - Check the status based on username: `check [username]`
+  - Create private chat with a user: `private-chat [with_user_name]`
+  - Resume private chat: `[]`
+  - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
+  - Join an existing chat room: `[]`
+  - List existing chat rooms: `list-chat-rooms`
   - Quit the program: `exit`
 
 - Rules:
@@ -139,6 +144,7 @@ CREATE TABLE room_member (
 | /chatapp/user/allactive | GET | username,<br>session_id | N/A | ["\<user1>", "\<user2>"...] |
 | /chatapp/chat/private-chat | POST | N/A | {"user1":"", "user2":""} | N/A |
 | /chatapp/chat/chat-room | POST | N/A | {"name":"", "users":["", ""]} | N/A |
+| /chatapp/chat/all-chatroom | GET | N/A | N/A | N/A|
 
 Sample Curl Requests
 
@@ -156,6 +162,8 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat' --header 'Content-Type: application/json' --data '{"user1": "ydjing121", "user2":"jingyidu122"}'`
 - /chatapp/chat/chat_room:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room' --header 'Content-Type: application/json' --data '{"name": "group1", "users":["ydjing121", "jingyidu122"]}'`
+- /chatapp/chat/all-chatroom:
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/all-chatroom'`
 
 
 

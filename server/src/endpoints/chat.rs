@@ -1,10 +1,15 @@
 use rocket::http::Status;
-use rocket::post;
+use rocket::{get, post};
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 
 use crate::database::DbManager;
 
+#[derive(Deserialize, Serialize)]
+pub struct ChatRoom {
+    id: String,
+    name: String
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct ChatRoomInfo {
@@ -57,5 +62,23 @@ pub async fn create_chat_room<'a>(
     } else {
         println!("Failed to create chat room '{}'.", chat_room_info.name);
         Status::InternalServerError
+    }
+}
+
+#[get("/all-chatroom")]
+pub async fn get_all_chat_rooms(
+    db_manager: &rocket::State<DbManager>,
+) -> (Status, Json<Vec<ChatRoom>>) {
+    match db_manager.get_all_chat_rooms().await {
+        Some(rooms) => {
+            let res: Vec<ChatRoom> = rooms.iter().map(|room| {
+                ChatRoom {
+                    id: room.0.clone(),
+                    name: room.1.clone(), // Assuming room.1 is a String
+                }
+            }).collect();
+            (Status::Ok, Json(res))
+        }
+        None => (Status::Ok, Json(vec![])),
     }
 }

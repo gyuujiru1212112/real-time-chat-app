@@ -8,6 +8,12 @@ pub struct User {
     pub session_id: Option<String>,
 }
 
+#[derive(Debug, FromRow)]
+pub struct ChatRoom {
+    id: i64,
+    name: String,
+}
+
 pub struct DbManager {
     conn_pool: MySqlPool,
 }
@@ -142,6 +148,30 @@ impl DbManager {
             Ok(users) => Some(users),
             Err(e) => {
                 println!("Error querying user table: {}", e);
+                None
+            }
+        }
+    }
+
+    pub async fn get_all_chat_rooms(&self) -> Option<Vec<(String, String)>> {
+        let query = "SELECT id, name FROM chat_room";
+        let result= sqlx::query_as::<_, ChatRoom>(&query).fetch_all(&self.conn_pool)
+            .await;
+        match result {
+            Ok(chat_rooms) => {
+                if chat_rooms.is_empty() {
+                    None
+                } else {
+                    let mut names = Vec::new();
+                    for room in chat_rooms
+                    {
+                        names.push((room.id.to_string(), room.name));
+                    }
+                    Some(names)
+                }
+            }
+            Err(e) => {
+                println!("Error querying chat_room table: {}", e);
                 None
             }
         }
