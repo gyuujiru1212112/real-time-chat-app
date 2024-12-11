@@ -1,26 +1,11 @@
+use crate::common::{SubscriptionMessage, UserMessage, PUBSUB_HOST_PORT};
 use futures_util::sink::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream, StreamExt};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
 use tokio_websockets::{Message, ServerBuilder, WebSocketStream};
-
-const PUBSUB_HOST_PORT: &str = "127.0.0.1:8080";
-
-#[derive(Deserialize, Serialize)]
-struct SubscriptionMessage {
-    topic: String,
-    username: String,
-}
-
-#[derive(Deserialize, Serialize)]
-struct UserMessage {
-    topic: String,
-    sender: String,
-    content: String,
-}
 
 struct Subscriber {
     topic: String,

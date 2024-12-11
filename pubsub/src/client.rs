@@ -1,26 +1,11 @@
+use crate::common::{SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS};
 use futures_util::stream::StreamExt;
 use futures_util::SinkExt;
 use http::Uri;
-use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::net::TcpStream;
 use tokio_websockets::tls::MaybeTlsStream;
 use tokio_websockets::{ClientBuilder, Error, Message, WebSocketStream};
-
-const PUBSUB_SERVER_ADDRESS: &str = "ws://127.0.0.1:8080";
-
-#[derive(Deserialize, Serialize)]
-struct SubscriptionMessage {
-    topic: String,
-    username: String,
-}
-
-#[derive(Deserialize, Serialize)]
-struct UserMessage {
-    topic: String,
-    sender: String,
-    content: String,
-}
 
 pub struct PubSubClient {
     username: String,
