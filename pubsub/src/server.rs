@@ -2,7 +2,6 @@ use futures_util::sink::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
 use std::sync::{Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
@@ -73,6 +72,42 @@ impl Broker {
     }
 }
 
+pub struct PubSubServer {
+    broker: Broker,
+    listener: TcpListener,
+}
+
+impl PubSubServer {
+    pub async fn new() -> Result<PubSubServer, std::io::Error> {
+        match TcpListener::bind(PUBSUB_HOST_PORT).await {
+            Ok(listener) => {
+                println!("Listening on port 8080");
+                Ok(PubSubServer {
+                    broker: Broker::default(),
+                    listener,
+                })
+            }
+            Err(e) => {
+                println!("Failed to bind TCP Listener. {e}");
+                Err(e)
+            }
+        }
+    }
+
+    pub async fn start(&self) -> Result<(), std::io::Error> {
+        loop {
+            let (socket, _) = self.listener.accept().await?;
+            match ServerBuilder::new().accept(socket).await {
+                Ok(ws_stream) => {
+                    let cloned_broker = self.broker.clone();
+                    tokio::spawn(handle_connection(cloned_broker, ws_stream));
+                }
+                Err(e) => println!("Failed to handle new connection: {e}"),
+            };
+        }
+    }
+}
+
 async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStream>) {
     let (mut ws_sender, mut ws_receiver): (
         SplitSink<WebSocketStream<TcpStream>, Message>,
@@ -116,20 +151,4 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
             let _ = ws_sender.send(message).await;
         }
     });
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-    let broker: Broker = Broker::default();
-
-    let listener = TcpListener::bind(PUBSUB_HOST_PORT).await?;
-    println!("listening on port 8080");
-
-    loop {
-        let (socket, _) = listener.accept().await?;
-        // println!("New connection from {addr:?}");
-        let cloned_broker = broker.clone();
-        let ws_stream = ServerBuilder::new().accept(socket).await?;
-        tokio::spawn(handle_connection(cloned_broker, ws_stream));
-    }
 }
