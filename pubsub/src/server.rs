@@ -17,7 +17,7 @@ impl PubSubServer {
             Ok(listener) => {
                 println!("Listening on port 8080");
                 Ok(PubSubServer {
-                    broker: Broker::default(),
+                    broker: Broker::new().await,
                     listener,
                 })
             }
@@ -57,7 +57,14 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
         match msg.as_text() {
             Some(text) => {
                 if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
-                    broker.subscribe(sub_msg.topic, sub_msg.username, bcast_tx.clone());
+                    broker
+                        .subscribe(
+                            sub_msg.topic,
+                            sub_msg.username,
+                            sub_msg.session_id,
+                            bcast_tx.clone(),
+                        )
+                        .await;
                     break;
                 }
             }
@@ -70,7 +77,9 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
             match msg.as_text() {
                 Some(text) => {
                     if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
-                        broker.unsubscribe(sub_msg.topic, sub_msg.username);
+                        broker
+                            .unsubscribe(sub_msg.topic, sub_msg.username, sub_msg.session_id)
+                            .await;
                         break;
                     }
                     match serde_json::from_str::<UserMessage>(text) {

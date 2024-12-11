@@ -9,16 +9,18 @@ use tokio_websockets::{ClientBuilder, Error, Message, WebSocketStream};
 
 pub struct PubSubClient {
     username: String,
+    session_id: String,
     topic: Option<String>,
     stream: WebSocketStream<MaybeTlsStream<TcpStream>>,
 }
 
 impl PubSubClient {
-    pub async fn new(username: String) -> Result<PubSubClient, Error> {
+    pub async fn new(username: String, session_id: String) -> Result<PubSubClient, Error> {
         let client_builder = ClientBuilder::from_uri(Uri::from_static(PUBSUB_SERVER_ADDRESS));
         match client_builder.connect().await {
             Ok((stream, _)) => Ok(PubSubClient {
                 username,
+                session_id,
                 topic: None,
                 stream,
             }),
@@ -33,6 +35,7 @@ impl PubSubClient {
         let subscription_message: SubscriptionMessage = SubscriptionMessage {
             topic: topic.clone(),
             username: self.username.clone(),
+            session_id: self.session_id.clone(),
             action: SubscriptionAction::Subscribe,
         };
         let message = Message::text(serde_json::to_string(&subscription_message).unwrap());
@@ -49,6 +52,7 @@ impl PubSubClient {
         let subscription_message: SubscriptionMessage = SubscriptionMessage {
             topic: self.topic.clone().unwrap(),
             username: self.username.clone(),
+            session_id: self.session_id.clone(),
             action: SubscriptionAction::Unsubscribe,
         };
         let message = Message::text(serde_json::to_string(&subscription_message).unwrap());

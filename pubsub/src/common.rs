@@ -13,6 +13,7 @@ pub enum SubscriptionAction {
 pub struct SubscriptionMessage {
     pub topic: String,
     pub username: String,
+    pub session_id: String,
     pub action: SubscriptionAction,
 }
 
