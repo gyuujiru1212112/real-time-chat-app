@@ -27,6 +27,7 @@ pub enum Command {
         users: Vec<String> // current user included
     },
     ListAllChatRooms,
+    ListAllRecipients,
     Help,
     Quit
 }
@@ -50,6 +51,7 @@ pub fn parse_command(input: &str) -> Option<Command>
             Some(Command::CreateChatRoom { name: (name.to_string()), users: (user_list) })
         },
         ["list-chat-rooms"] => Some(Command::ListAllChatRooms),
+        ["list-recipients"] => Some(Command::ListAllRecipients),
         ["help"] => Some(Command::Help),
         ["exit"] => Some(Command::Quit),
         _ => None

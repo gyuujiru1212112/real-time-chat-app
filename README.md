@@ -30,6 +30,7 @@ To achieve this, the application will employ the **WebSocket communication proto
   - Check the activity status of a specific user based on their username
   - Create a new private chat
   - Resume an existing private chat
+  - List all the recipients with whom the user has a private chat with
   - Create a new chat room
   - Join an existing chat room
   - List existing chat rooms
@@ -109,9 +110,9 @@ CREATE TABLE room_member (
   - Check the status based on username: `check [username]`
   - Create private chat with a user: `private-chat [with_user_name]`
   - Resume private chat: `resume-chat []`
+  - List all the private chat recipients: `list-recipients`
   - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
   - Join an existing chat room: `[]`
-  - List private chat partners: `list-chat-partners`
   - List existing chat rooms: `list-chat-rooms`
   - Quit the program: `exit`
 

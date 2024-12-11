@@ -122,6 +122,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     prompt = format!("Me ({}): ", user.get_user_name());
                                 }
                             }
+                            Some(Command::ListAllRecipients) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                user.list_all_recipients(&client).await?;
+                            }
                             Some(Command::CreateChatRoom { name, users }) => {
                                 if !user.session_exists() {
                                     print_session_not_exist_error_msg();

@@ -41,9 +41,10 @@ pub fn print_help_msg_after_login() {
     println!("{}", "Commands:".cyan());
     println!("Show help message: {}", "help".cyan());
     println!("Logout: {}", "logout".cyan());
-    println!("List all active users: {}", "list-users".cyan());
+    println!("List all the users: {}", "list-users".cyan());
     println!("Check the status based on username: {}", "check [username]".cyan());
     println!("Create private chat with a user: {}", "private-chat [with_user_name]".cyan());
+    println!("List all the private chat recipients: {}", "list-recipients".cyan());
     println!("Resume private chat: []");
     println!("Create chat room with a list of users: {}", "chat-room [group_name] [user1] [user2] [user3]...".cyan());
     println!("Join an existing chat room: []");

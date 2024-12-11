@@ -276,6 +276,35 @@ impl User {
         }
     }
 
+    pub async fn list_all_recipients(&self, client: &Client) -> Result<(), Box<dyn StdError>> {
+        let url = "http://localhost:8000/chatapp/chat/private-chat/recipients"; // endpoint
+
+        let session = self.session.as_ref().unwrap();
+        // Send the GET request with headers
+        let response = client
+            .get(url)
+            .header("username", &session.username)
+            .header("session_id", &session.session_id)
+            .send()
+            .await?;
+        if response.status().is_success() {
+            let recipients: Vec<String> = response.json().await.expect("Failed to parse JSON");
+            if recipients.is_empty() {
+                print_msg("No private chat.");
+            } else {
+                let formatted = format!("[{}]", recipients.join(", "));
+                println!("{}", formatted);
+            }
+        } else {
+            print_warning_error_msg(&format!(
+                "Error: failed to retrieve private chat recipients: {}.",
+                response.status()
+            ));
+        }
+
+        Ok(())
+    }
+
     async fn resume_private_chat(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>> {
         Ok(())
     }
