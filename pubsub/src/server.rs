@@ -41,6 +41,18 @@ impl Broker {
         println!("Subscribed user {} to topic {}", username, topic);
     }
 
+    fn unsubscribe(&mut self, topic: String, username: String) {
+        // TODO: Add error handling and make sure user is subscribed before unsubscribing.
+        let mut subscribers = self.subscribers.lock().unwrap();
+        let topic_subs = subscribers.get_mut(&topic).unwrap();
+        let idx = topic_subs
+            .iter()
+            .position(|x| *x.username == username)
+            .unwrap();
+        topic_subs.remove(idx);
+        println!("Unsubscribed user {} from topic {}", username, topic);
+    }
+
     async fn publish(&self, user_msg: UserMessage) {
         let mut subscribers = self.subscribers.lock().unwrap();
 
@@ -116,24 +128,34 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
         }
     }
 
-    tokio::spawn(async move {
+    let receiver_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = ws_receiver.next().await {
             match msg.as_text() {
-                Some(text) => match serde_json::from_str::<UserMessage>(text) {
-                    Ok(user_msg) => {
-                        println!("Publishing received message...");
-                        broker.publish(user_msg).await;
+                Some(text) => {
+                    if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
+                        broker.unsubscribe(sub_msg.topic, sub_msg.username);
+                        break;
                     }
-                    Err(e) => println!("Oops: {}", e),
-                },
+                    match serde_json::from_str::<UserMessage>(text) {
+                        Ok(user_msg) => {
+                            println!("Publishing received message...");
+                            broker.publish(user_msg).await;
+                        }
+                        Err(e) => println!("Oops: {}", e),
+                    }
+                }
                 None => (),
             }
         }
     });
 
-    tokio::spawn(async move {
+    let sender_task = tokio::spawn(async move {
         while let Ok(message) = bcast_rx.recv().await {
             let _ = ws_sender.send(message).await;
         }
     });
+    let _ = receiver_task.await;
+    // println!("receiver_task finished");
+    sender_task.abort();
+    // println!("aborted sender_task");
 }

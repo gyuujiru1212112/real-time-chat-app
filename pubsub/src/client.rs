@@ -1,4 +1,4 @@
-use crate::common::{SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS};
+use crate::common::{SubscriptionAction, SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS};
 use futures_util::stream::StreamExt;
 use futures_util::SinkExt;
 use http::Uri;
@@ -33,6 +33,7 @@ impl PubSubClient {
         let subscription_message: SubscriptionMessage = SubscriptionMessage {
             topic: topic.clone(),
             username: self.username.clone(),
+            action: SubscriptionAction::Subscribe,
         };
         let message = Message::text(serde_json::to_string(&subscription_message).unwrap());
         match self.stream.send(message).await {
@@ -44,10 +45,27 @@ impl PubSubClient {
         }
     }
 
+    pub async fn unsubscribe(&mut self) -> Result<(), Error> {
+        let subscription_message: SubscriptionMessage = SubscriptionMessage {
+            topic: self.topic.clone().unwrap(),
+            username: self.username.clone(),
+            action: SubscriptionAction::Unsubscribe,
+        };
+        let message = Message::text(serde_json::to_string(&subscription_message).unwrap());
+        match self.stream.send(message).await {
+            Ok(()) => {
+                self.topic = None;
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     pub async fn start(&mut self) -> Result<(), Error> {
         let stdin = tokio::io::stdin();
         let mut stdin = BufReader::new(stdin).lines();
 
+        // Consider using tokio::spawn instead of loop + tokio::select!
         loop {
             tokio::select! {
                 incoming = self.stream.next() => {
@@ -72,14 +90,19 @@ impl PubSubClient {
                     match res {
                         Ok(None) => return Ok(()),
                         Ok(Some(line)) => {
-                            let user_message = self.create_user_message(line.to_string());
-                            let message = Message::text(serde_json::to_string(&user_message).unwrap());
-                            self.stream.send(message).await?
+                            // If there will be more commands, consider making an enum.
+                            if line == "<exit>" {
+                                self.unsubscribe().await?;
+                                self.stream.close().await?
+                            } else {
+                                let user_message = self.create_user_message(line.to_string());
+                                let message = Message::text(serde_json::to_string(&user_message).unwrap());
+                                self.stream.send(message).await?
+                            }
                         },
                         Err(err) => return Err(err.into()),
                     }
                 }
-
             }
         }
     }
