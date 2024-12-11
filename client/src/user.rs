@@ -43,7 +43,7 @@ pub struct ChatRoomInfo {
 pub struct PrivateChatInfo {
     username: String,
     session_id: String,
-    user2: String,
+    recipient: String,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -255,7 +255,7 @@ impl User {
         let chat_info = PrivateChatInfo {
             username: session.username.clone(),
             session_id: session.session_id.clone(),
-            user2: user.clone(),
+            recipient: user.clone(),
         };
 
         // Send the POST request
@@ -288,15 +288,10 @@ impl User {
     ) -> Result<bool, Box<dyn StdError>> {
         let session = self.session.as_ref().unwrap();
 
-        let mut unique_members: HashSet<String> = members.iter().cloned().collect();
+        let unique_members: HashSet<String> = members.iter().cloned().collect();
         if unique_members.is_empty() {
             return self
                 .error_response("You are not allowed to create a group chat without members");
-        }
-
-        unique_members.insert(session.username.clone());
-        if unique_members.len() == 1 {
-            return self.error_response("You are not allowed to create a group chat with yourself");
         }
 
         let chat_room_info = ChatRoomInfo {
@@ -335,7 +330,7 @@ impl User {
     }
 
     pub async fn list_all_chat_rooms(&self, client: &Client) -> Result<(), Box<dyn StdError>> {
-        let url = "http://localhost:8000/chatapp/chat/chatroom/all"; // endpoint
+        let url = "http://localhost:8000/chatapp/chat/chat-room/all"; // endpoint
 
         let session = self.session.as_ref().unwrap();
         // Send the GET request with headers

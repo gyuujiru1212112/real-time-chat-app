@@ -18,14 +18,14 @@ pub struct ChatRoomInfo {
     username: String,
     session_id: String,
     room_name: String,
-    members: Vec<String>,
+    members: Vec<String>, // other than the username itself
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct PrivateChatInfo {
     username: String,
     session_id: String,
-    user2: String
+    recipient: String
 }
 
 #[post("/private-chat/create", format = "json", data = "<private_chat_info>")]
@@ -48,16 +48,16 @@ pub async fn create_private_chat<'a>(
     let success: bool = db_manager
         .insert_private_chat(
             &private_chat_info.username,
-            &private_chat_info.user2
+            &private_chat_info.recipient
         ).await;
 
         if success {
             println!("Private chat created between users '{}' and '{}'",
-                &private_chat_info.username, &private_chat_info.user2);
+                &private_chat_info.username, &private_chat_info.recipient);
             Status::Created
         } else {
             println!("Failed to create a private chat between users '{}' and '{}'",
-                &private_chat_info.username, &private_chat_info.user2);
+                &private_chat_info.username, &private_chat_info.recipient);
             Status::InternalServerError
         }
 
@@ -99,10 +99,15 @@ pub async fn create_chat_room<'a>(
         return Status::Unauthorized;
     }
 
+    let members = {
+        let mut temp = chat_room_info.members.clone();
+        temp.push(chat_room_info.username.to_owned());
+        temp
+    };
     let success: bool = db_manager
         .insert_chat_room(
             &chat_room_info.room_name,
-            &chat_room_info.members
+            &members
         )
         .await;
     if success {
@@ -114,7 +119,7 @@ pub async fn create_chat_room<'a>(
     }
 }
 
-#[post("/chatroom/join", format = "json", data = "<chat_room_info>")]
+#[post("/chat-room/join", format = "json", data = "<chat_room_info>")]
 pub async fn joint_chat_room<'a>(
     chat_room_info: Json<ChatRoomInfo>,
     db_manager: &rocket::State<DbManager>,
@@ -156,7 +161,7 @@ pub async fn get_all_recipients(
     }
 }
 
-#[get("/chatroom/all")]
+#[get("/chat-room/all")]
 pub async fn get_all_chat_rooms(
     user_info: UserReqInfo,
     db_manager: &rocket::State<DbManager>,
