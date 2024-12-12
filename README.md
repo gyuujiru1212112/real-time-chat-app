@@ -26,10 +26,11 @@ To achieve this, the application will employ the **WebSocket communication proto
   - Sign up to create a new user
   - Show help messages
   - Login and logout
-  - View a list of other users with an "active" status
+  - View a list of other users with their status
   - Check the activity status of a specific user based on their username
   - Create a new private chat
   - Resume an existing private chat
+  - List all the recipients with whom the user has a private chat with
   - Create a new chat room
   - Join an existing chat room
   - List existing chat rooms
@@ -108,7 +109,8 @@ CREATE TABLE room_member (
   - List all the users: `list-users`
   - Check the status based on username: `check [username]`
   - Create private chat with a user: `private-chat [with_user_name]`
-  - Resume private chat: `[]`
+  - Resume private chat: `resume-chat []`
+  - List all the private chat recipients: `list-recipients`
   - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
   - Join an existing chat room: `[]`
   - List existing chat rooms: `list-chat-rooms`
@@ -141,10 +143,11 @@ CREATE TABLE room_member (
 | /chatapp/user/login | POST | N/A | {"username": "", "password": ""} | {"message": "Success", "session_id": ""} |
 | /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
 | /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE"<br>or "INACTIVE"<br>or "NOT_FOUND" |
-| /chatapp/user/allactive | GET | username,<br>session_id | N/A | ["\<user1>", "\<user2>"...] |
-| /chatapp/chat/private-chat | POST | N/A | {"user1":"", "user2":""} | N/A |
-| /chatapp/chat/chat-room | POST | N/A | {"name":"", "users":["", ""]} | N/A |
-| /chatapp/chat/all-chatroom | GET | N/A | N/A | N/A|
+| /chatapp/user/allusers | GET | username,<br>session_id | N/A | [{"username":"user1","status":""},{"username":"user2","status":""},{"username":"user3","status":""}...] |
+| /chatapp/chat/private-chat/create | POST | N/A | {"username":"", "session_id":"", "recipient":""} | N/A |
+| /chatapp/chat/chat-room/create | POST | N/A |     {username:"", "session_id":"", "room_name":"", "members": ["", "", ""...]} | N/A |
+| /chatapp/chat/chat-room/all | GET | username,<br>session_id | N/A | [{"id":"1","name":"group1"},{"id":"2","name":"group2"},{"id":"3","name":"group3"}...] |
+| /chatapp/chat/private-chat/recipients | GET | username,<br>session_id | N/A | ["recipient1", "recipient2"...] |
 
 Sample Curl Requests
 
@@ -156,14 +159,16 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
 - /chatapp/user/status?username:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allactive:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/allactive' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private_chat:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat' --header 'Content-Type: application/json' --data '{"user1": "ydjing121", "user2":"jingyidu122"}'`
-- /chatapp/chat/chat_room:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room' --header 'Content-Type: application/json' --data '{"name": "group1", "users":["ydjing121", "jingyidu122"]}'`
-- /chatapp/chat/all-chatroom:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/all-chatroom'`
+- /chatapp/user/allusers:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+- /chatapp/chat/private-chat/create:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
+- /chatapp/chat/chat-room/create:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "room_name": "group1", "members": ["test_user1", "test_user2", "test_user3"...]}'`
+- /chatapp/chat/chat-room/all:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+- /chatapp/chat/private-chat/recipients:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 
 

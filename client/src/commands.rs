@@ -15,7 +15,7 @@ pub enum Command {
         password: String
     },
     Logout,
-    ListActiveUsers,
+    ListUsers,
     CheckUserStatus {
         username: String // the user that we want to check
     },
@@ -27,6 +27,7 @@ pub enum Command {
         users: Vec<String> // current user included
     },
     ListAllChatRooms,
+    ListAllRecipients,
     Help,
     Quit
 }
@@ -40,7 +41,7 @@ pub fn parse_command(input: &str) -> Option<Command>
         ["login", username, password] => Some(
             Command::Login { username: (username.to_string()), password: (password.to_string()) }),
         ["logout"] => Some(Command::Logout),
-        ["list-users"] => Some(Command::ListActiveUsers),
+        ["list-users"] => Some(Command::ListUsers),
         ["check", username] => Some(
             Command::CheckUserStatus { username: (username.to_string()) }
         ),
@@ -50,6 +51,7 @@ pub fn parse_command(input: &str) -> Option<Command>
             Some(Command::CreateChatRoom { name: (name.to_string()), users: (user_list) })
         },
         ["list-chat-rooms"] => Some(Command::ListAllChatRooms),
+        ["list-recipients"] => Some(Command::ListAllRecipients),
         ["help"] => Some(Command::Help),
         ["exit"] => Some(Command::Quit),
         _ => None

@@ -12,7 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     print_msg("Welcome to the real time chat app!");
     print_msg("Type 'help' to see available commands.");
     // client, input
+    let history_file = "history.txt";
     let mut rl = rustyline::Editor::<()>::new();
+    let _ = rl.load_history(history_file);
+
     let mut current_mode = "main";
     let client = Client::new();
     let mut user = User::new();
@@ -87,14 +90,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     prompt = String::from(">> ");
                                 }
                             }
-                            Some(Command::ListActiveUsers) => {
+                            Some(Command::ListUsers) => {
                                 // check whether session exists
                                 if !user.session_exists() {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
         
-                                user.list_active_users(&client).await?;
+                                user.list_users(&client).await?;
                             }
                             Some(Command::CheckUserStatus { username }) => {
                                 // check whether session exists
@@ -118,6 +121,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_msg(&enter_msg);
                                     prompt = format!("Me ({}): ", user.get_user_name());
                                 }
+                            }
+                            Some(Command::ListAllRecipients) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                user.list_all_recipients(&client).await?;
                             }
                             Some(Command::CreateChatRoom { name, users }) => {
                                 if !user.session_exists() {
@@ -171,6 +182,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
+    rl.save_history(history_file)?;
     Ok(())
 }

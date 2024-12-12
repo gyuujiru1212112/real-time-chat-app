@@ -1,4 +1,4 @@
-use sqlx::{mysql::MySqlPool, Error, FromRow};
+use sqlx::{mysql::MySqlPool, Row, Error, FromRow};
 
 #[derive(FromRow)]
 pub struct User {
@@ -47,6 +47,39 @@ impl DbManager {
                 false
             }
         }
+    }
+
+    pub async fn get_all_chat_recipients(&self, username: &str) -> Option<Vec<String>>
+    {
+        let query = r#"
+            SELECT user1 AS partner
+            FROM private_chat
+            WHERE user2 = ?
+            UNION
+            SELECT user2 AS partner
+            FROM private_chat
+            WHERE user1 = ?;
+            "#;
+
+        let result = sqlx::query(&query)
+            .bind(username)
+            .bind(username)
+            .fetch_all(&self.conn_pool).await;
+
+        match result {
+            Ok(partner_rows) => {
+                let partners = partner_rows.iter()
+                    .map(|row| row.get("partner")).collect();
+
+                Some(partners)
+            }
+
+            Err(e) => {
+                println!("Error querying private_chat table for user '{}': {}", username, e);
+                None
+            }
+        }
+
     }
 
     pub async fn insert_chat_room(&self, name: &str, users: &Vec<String>) -> bool {
@@ -139,8 +172,8 @@ impl DbManager {
         }
     }
 
-    pub async fn get_active_users(&self) -> Option<Vec<User>> {
-        let query = "SELECT * FROM user WHERE session_id IS NOT NULL and session_id != \"\";";
+    pub async fn get_all_users(&self) -> Option<Vec<User>> {
+        let query = "SELECT * FROM user;";
         let result = sqlx::query_as::<_, User>(&query)
             .fetch_all(&self.conn_pool)
             .await;
