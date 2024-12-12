@@ -1,5 +1,5 @@
 use crate::broker::Broker;
-use crate::common::{SubscriptionMessage, UserMessage, PUBSUB_HOST_PORT};
+use crate::common::{ErrorMessage, SubscriptionMessage, UserMessage, PUBSUB_HOST_PORT};
 use futures_util::sink::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -49,22 +49,25 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
     ) = ws_stream.split();
     let (bcast_tx, mut bcast_rx): (Sender<Message>, Receiver<Message>) = channel(16);
 
-    let _ = ws_sender
-        .send(Message::text("Welcome to chat! Type a message".to_string()))
-        .await;
-
     while let Some(Ok(msg)) = ws_receiver.next().await {
         match msg.as_text() {
             Some(text) => {
                 if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
-                    broker
-                        .subscribe(
-                            sub_msg.topic,
-                            sub_msg.username,
-                            sub_msg.session_id,
-                            bcast_tx.clone(),
-                        )
-                        .await;
+                    match broker.subscribe(&sub_msg, bcast_tx.clone()).await {
+                        Ok(_) => (),
+                        Err(e) => {
+                            let err_message = ErrorMessage {
+                                error: e,
+                                message: format!(
+                                    "Failed to subscribe to topic \"{}\".",
+                                    &sub_msg.topic
+                                ),
+                            };
+                            let msg: Message =
+                                Message::text(serde_json::to_string(&err_message).unwrap());
+                            let _ = ws_sender.send(msg).await;
+                        }
+                    }
                     break;
                 }
             }
@@ -77,15 +80,12 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
             match msg.as_text() {
                 Some(text) => {
                     if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
-                        broker
-                            .unsubscribe(sub_msg.topic, sub_msg.username, sub_msg.session_id)
-                            .await;
+                        broker.unsubscribe(&sub_msg).await;
                         break;
                     }
                     match serde_json::from_str::<UserMessage>(text) {
                         Ok(user_msg) => {
-                            println!("Publishing received message...");
-                            broker.publish(user_msg).await;
+                            broker.publish(user_msg);
                         }
                         Err(e) => println!("Oops: {}", e),
                     }
@@ -101,7 +101,5 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
         }
     });
     let _ = receiver_task.await;
-    // println!("receiver_task finished");
     sender_task.abort();
-    // println!("aborted sender_task");
 }

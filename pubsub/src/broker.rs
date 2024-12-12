@@ -1,4 +1,4 @@
-use crate::common::UserMessage;
+use crate::common::{PubSubError, SubscriptionMessage, UserMessage};
 use crate::database::DbManager;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -6,15 +6,16 @@ use tokio::sync::broadcast::Sender;
 use tokio_websockets::Message;
 
 struct Subscriber {
-    topic: String,
+    topic: Option<String>,
     username: String,
     sender: Sender<Message>,
 }
 
 #[derive(Clone)]
 pub struct Broker {
-    subscribers: Arc<Mutex<HashMap<String, Vec<Subscriber>>>>,
-    db_manager: Arc<Mutex<DbManager>>,
+    subscribers: Arc<Mutex<HashMap<String, Subscriber>>>,
+    topics: Arc<Mutex<HashMap<String, Vec<String>>>>,
+    db_manager: Arc<DbManager>,
 }
 
 impl Broker {
@@ -22,95 +23,95 @@ impl Broker {
         let db_manager = DbManager::new().await.unwrap();
         Broker {
             subscribers: Arc::new(Mutex::new(HashMap::new())),
-            db_manager: Arc::new(Mutex::new(db_manager)),
+            topics: Arc::new(Mutex::new(HashMap::new())),
+            db_manager: Arc::new(db_manager),
         }
     }
 
     pub async fn subscribe(
         &mut self,
-        topic: String,
-        username: String,
-        session_id: String,
+        sub_msg: &SubscriptionMessage,
         sender: Sender<Message>,
-    ) {
-        let mut subscribers = self.subscribers.lock().unwrap();
-        let subscriber: Subscriber = Subscriber {
-            topic: topic.clone(),
-            username: username.clone(),
-            sender,
+    ) -> Result<(), PubSubError> {
+        match self
+            .db_manager
+            .is_session_id_valid(&sub_msg.username, &sub_msg.session_id)
+            .await
+        {
+            true => {
+                let mut subscribers = self.subscribers.lock().unwrap();
+                let subscriber: Subscriber = Subscriber {
+                    topic: Some(sub_msg.topic.clone()),
+                    username: sub_msg.username.clone(),
+                    sender,
+                };
+                subscribers.insert(sub_msg.username.clone(), subscriber);
+
+                let mut topics = self.topics.lock().unwrap();
+                topics
+                    .entry(sub_msg.topic.clone())
+                    .or_insert_with(Vec::new)
+                    .push(sub_msg.username.clone());
+
+                println!(
+                    "Subscribed user {} to topic {}",
+                    sub_msg.username, sub_msg.topic
+                );
+                Ok(())
+            }
+            false => {
+                println!(
+                    "Failed to subscribe user \"{}\" to topic \"{}\": Invalid username + session_id",
+                    sub_msg.username, sub_msg.topic
+                );
+                Err(PubSubError::SubscriptionError)
+            }
+        }
+    }
+
+    pub async fn unsubscribe(&mut self, sub_msg: &SubscriptionMessage) {
+        match self
+            .db_manager
+            .is_session_id_valid(&sub_msg.username, &sub_msg.session_id)
+            .await
+        {
+            true => {
+                let mut topics = self.topics.lock().unwrap();
+                let topic_subs = topics.get_mut(&sub_msg.topic).unwrap();
+                let idx = topic_subs
+                    .iter()
+                    .position(|x| *x == sub_msg.username)
+                    .unwrap();
+                topic_subs.remove(idx);
+
+                let mut subscribers = self.subscribers.lock().unwrap();
+                let subscriber = subscribers.get_mut(&sub_msg.username).unwrap();
+                subscriber.topic = None;
+                println!(
+                    "Unsubscribed user {} from topic {}",
+                    sub_msg.username, sub_msg.topic
+                );
+            }
+            false => {
+                println!(
+                    "Failed to Unsubscribe user {} from topic {}: Invalid username + session_id",
+                    sub_msg.username, sub_msg.topic
+                );
+            }
         };
-        subscribers
-            .entry(topic.clone())
-            .or_insert_with(Vec::new)
-            .push(subscriber);
-        println!("Subscribed user {} to topic {}", username, topic);
-
-        // let db_manager = self.db_manager.lock().unwrap();
-        // match db_manager.is_session_id_valid(&username, &session_id).await {
-        //     true => {
-        //         let mut subscribers = self.subscribers.lock().unwrap();
-        //         let subscriber: Subscriber = Subscriber {
-        //             topic: topic.clone(),
-        //             username: username.clone(),
-        //             sender,
-        //         };
-        //         subscribers
-        //             .entry(topic.clone())
-        //             .or_insert_with(Vec::new)
-        //             .push(subscriber);
-        //         println!("Subscribed user {} to topic {}", username, topic);
-        //     }
-        //     false => {
-        //         println!(
-        //             "Failed to subscribe user {} to topic {}: Invalid username + session_id",
-        //             username, topic
-        //         );
-        //     }
-        // }
     }
 
-    pub async fn unsubscribe(&mut self, topic: String, username: String, session_id: String) {
-        // TODO: Add error handling and make sure user is subscribed before unsubscribing.
-
-        let mut subscribers = self.subscribers.lock().unwrap();
-        let topic_subs = subscribers.get_mut(&topic).unwrap();
-        let idx = topic_subs
-            .iter()
-            .position(|x| *x.username == username)
-            .unwrap();
-        topic_subs.remove(idx);
-        println!("Unsubscribed user {} from topic {}", username, topic);
-
-        // let db_manager = self.db_manager.lock().unwrap();
-        // match db_manager.is_session_id_valid(&username, &session_id).await {
-        //     true => {
-        //         let mut subscribers = self.subscribers.lock().unwrap();
-        //         let topic_subs = subscribers.get_mut(&topic).unwrap();
-        //         let idx = topic_subs
-        //             .iter()
-        //             .position(|x| *x.username == username)
-        //             .unwrap();
-        //         topic_subs.remove(idx);
-        //         println!("Unsubscribed user {} from topic {}", username, topic);
-        //     }
-        //     false => {
-        //         println!(
-        //             "Failed to Unsubscribe user {} from topic {}: Invalid username + session_id",
-        //             username, topic
-        //         );
-        //     }
-        // };
-    }
-
-    pub async fn publish(&self, user_msg: UserMessage) {
-        let mut subscribers = self.subscribers.lock().unwrap();
+    pub fn publish(&self, user_msg: UserMessage) {
+        let subscribers = self.subscribers.lock().unwrap();
+        let mut topics = self.topics.lock().unwrap();
 
         let msg: Message = Message::text(serde_json::to_string(&user_msg).unwrap());
 
-        if let Some(topic_subscribers) = subscribers.get_mut(&user_msg.topic) {
-            for subscriber in topic_subscribers.iter_mut() {
+        if let Some(topic_subs) = topics.get_mut(&user_msg.topic) {
+            for subs_username in topic_subs.iter() {
                 // Send to all subscribers except for the sender itself.
-                if subscriber.username != user_msg.sender {
+                if subs_username != &user_msg.sender {
+                    let subscriber = subscribers.get(subs_username).unwrap();
                     let _ = subscriber.sender.send(msg.clone());
                 }
             }

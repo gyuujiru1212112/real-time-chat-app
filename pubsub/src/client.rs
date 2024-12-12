@@ -1,4 +1,6 @@
-use crate::common::{SubscriptionAction, SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS};
+use crate::common::{
+    ErrorMessage, SubscriptionAction, SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS,
+};
 use futures_util::stream::StreamExt;
 use futures_util::SinkExt;
 use http::Uri;
@@ -76,13 +78,17 @@ impl PubSubClient {
                     match incoming {
                         Some(Ok(msg)) => {
                             match msg.as_text() {
-                                Some(text) => match serde_json::from_str::<UserMessage>(text) {
-                                    Ok(user_msg) => {
+                                Some(text) => {
+                                    if let Ok(err_msg) = serde_json::from_str::<ErrorMessage>(&text) {
+                                        println!("Error: {} -> {}", err_msg.error, err_msg.message);
+                                        println!("Press enter key to exit.");
+                                        self.stream.close().await?;
+                                    } else if let Ok(user_msg) = serde_json::from_str::<UserMessage>(&text) {
                                         println!("{}: {}", user_msg.sender, user_msg.content);
+                                    } else {
+                                        println!("Unable to parse received message: {text}");
                                     }
-                                    Err(e) => {println!("Failed to parse received message: {e}");
-                                        println!("{text}");},
-                                },
+                                }
                                 None => (),
                             }
                         },
