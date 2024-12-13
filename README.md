@@ -136,6 +136,10 @@ CREATE TABLE room_member (
        - Digits (0-9).
        - Special characters (!@#$%^&*).
 
+- Commands available inside a chat session:
+  - `:help` - Show chat command options.
+  - `:exit` - Leave the chat and return to main app command line.
+
 ### Server
 
 #### API Endpoints
@@ -174,9 +178,14 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 
+### Pub-Sub Messaging Service
+- Start the pub-sub server: `cargo run -p pubsub --bin run_server`
+
 
 ## Contributions by each team member:
 - Kayleigh McNeil:
+  - Pub-Sub messaging service
+  - Integration of pub-sub messaging service into app
 - Yiduo Jing:
   - Rocket application & client setup
   - CLI commands for
