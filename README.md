@@ -46,7 +46,7 @@ To achieve this, the application will employ the **WebSocket communication proto
 ## User’s Guide
 
 ### Client (Command-line Utility)
-This command-line interface is built using the rustyline crate, enabling command history navigation with the up/down arrow keys. It also supports copying and pasting text into the command line input.
+This command-line interface is built using the rustyline crate, **enabling command history navigation with the up/down arrow keys**. It also supports **copying and pasting** text into the command line input.
 
 #### Before Login
 - **Signup & Login Rules:**
