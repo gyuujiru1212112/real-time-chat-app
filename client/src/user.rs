@@ -40,15 +40,15 @@ pub struct ChatRoomInfo {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct PrivateChatInfo {
+pub struct PrivateChatRequest {
     username: String,
     session_id: String,
     recipient: String,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct ChatRoom {
-    id: String,
+pub struct ChatRoomResponse {
+    room_id: String,
     name: String,
 }
 
@@ -259,7 +259,7 @@ impl User {
 
         let url = "http://localhost:8000/chatapp/chat/private-chat/create"; // endpoint
 
-        let chat_info = PrivateChatInfo {
+        let chat_info = PrivateChatRequest {
             username: session.username.clone(),
             session_id: session.session_id.clone(),
             recipient: user.clone(),
@@ -286,6 +286,52 @@ impl User {
         } else {
             print_warning_error_msg(&format!(
                 "Error: failed to create a private chat with user '{}': {}.",
+                user,
+                response.status()
+            ));
+            Ok(None)
+        }
+    }
+
+    pub async fn resume_private_chat(
+        &self,
+        client: &Client,
+        user: String,
+    ) -> Result<Option<String>, Box<dyn StdError>> {
+        let session = self.session.as_ref().unwrap();
+        if user == session.username {
+            print_warning_error_msg("You are not allowed to create a private chat with yourself");
+            return Ok(None);
+        }
+
+        let url = "http://localhost:8000/chatapp/chat/private-chat/resume"; // endpoint
+
+        let chat_info = PrivateChatRequest {
+            username: session.username.clone(),
+            session_id: session.session_id.clone(),
+            recipient: user.clone(),
+        };
+        // Send the POST request
+        let response = client.post(url).json(&chat_info).send().await?;
+
+        // Check if the response was successful
+        if response.status().is_success() {
+            // get the chat_id
+            let chat_id: String = response.json().await.expect("Failed to parse JSON");
+            if chat_id.is_empty() {
+                print_warning_error_msg("Error: failed to get the chat id.");
+                Ok(None)
+            } else {
+                print_msg(&format!(
+                    "You resumed the private chat with user '{}' successfully!",
+                    user
+                ));
+                print_msg(&format!("Chat id is {}", chat_id));
+                return Ok(Some(chat_id));
+            }
+        } else {
+            print_warning_error_msg(&format!(
+                "Error: failed to resume the private chat with user '{}': {}.",
                 user,
                 response.status()
             ));
@@ -322,10 +368,6 @@ impl User {
         Ok(())
     }
 
-    async fn resume_private_chat(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>> {
-        Ok(())
-    }
-
     pub async fn create_chat_room(
         &mut self,
         client: &Client,
@@ -337,7 +379,7 @@ impl User {
         let unique_members: HashSet<String> = members.iter().cloned().collect();
         if unique_members.is_empty() {
             print_warning_error_msg("You are not allowed to create a group chat without members");
-            return Ok(None)
+            return Ok(None);
         }
 
         let chat_room_info = ChatRoomInfo {
@@ -397,12 +439,13 @@ impl User {
             .send()
             .await?;
         if response.status().is_success() {
-            let chat_rooms: Vec<ChatRoom> = response.json().await.expect("Failed to parse JSON");
+            let chat_rooms: Vec<ChatRoomResponse> =
+                response.json().await.expect("Failed to parse JSON");
             if chat_rooms.is_empty() {
                 print_msg("No chat rooms.");
             } else {
                 for room in chat_rooms {
-                    print_msg(&format!("ID: {}, Name: {}", room.id, room.name));
+                    print_msg(&format!("Name: {}, Room_id: {}", room.name, room.room_id));
                 }
             }
         } else {
@@ -413,11 +456,6 @@ impl User {
         }
 
         Ok(())
-    }
-
-    fn ok_response(&self, message: &str) -> Result<bool, Box<dyn StdError>> {
-        print_msg(message);
-        Ok(true)
     }
 
     fn error_response(&self, message: &str) -> Result<bool, Box<dyn StdError>> {

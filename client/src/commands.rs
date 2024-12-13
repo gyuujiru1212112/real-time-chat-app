@@ -1,7 +1,7 @@
 use validator::ValidateEmail;
 use regex::Regex;
 
-use crate::common::{print_password_rule, print_user_name_rule, print_warning_error_msg};
+use crate::common::{CHAT_ROOM_CMD, CHECK_USER_STATUS_CMD, EXIT_CMD, HELP_CMD, LIST_CHAT_ROOMS_CMD, LIST_RECIPIENTS_CMD, LIST_USERS_CMD, LOGIN_CMD, LOGOUT_CMD, print_password_rule, print_user_name_rule, print_warning_error_msg, PRIVATE_CHAT_CMD, RESUME_CHAT_CMD, SIGNUP_CMD};
 
 #[derive(Debug)]
 pub enum Command {
@@ -20,11 +20,14 @@ pub enum Command {
         username: String // the user that we want to check
     },
     CreatePrivateChat {
-        with_user: String // user1 should be the current user
+        with_user: String
+    },
+    ResumeChat {
+        with_user: String
     },
     CreateChatRoom {
         name: String,
-        users: Vec<String> // current user included
+        users: Vec<String>
     },
     ListAllChatRooms,
     ListAllRecipients,
@@ -36,24 +39,25 @@ pub fn parse_command(input: &str) -> Option<Command>
 {
     let input_list: Vec<&str> = input.trim().split_whitespace().collect();
     match input_list.as_slice() {
-        ["signup", username, email, password] => Some(
+        [SIGNUP_CMD, username, email, password] => Some(
             Command::Signup { username: (username.to_string()), email: (email.to_string()), password: (password.to_string()) }),
-        ["login", username, password] => Some(
+        [LOGIN_CMD, username, password] => Some(
             Command::Login { username: (username.to_string()), password: (password.to_string()) }),
-        ["logout"] => Some(Command::Logout),
-        ["list-users"] => Some(Command::ListUsers),
-        ["check", username] => Some(
+        [LOGOUT_CMD] => Some(Command::Logout),
+        [LIST_USERS_CMD] => Some(Command::ListUsers),
+        [CHECK_USER_STATUS_CMD, username] => Some(
             Command::CheckUserStatus { username: (username.to_string()) }
         ),
-        ["private-chat", with_user] => Some(Command::CreatePrivateChat { with_user: (with_user.to_string()) }),
-        ["chat-room", name, users @..] => {
+        [PRIVATE_CHAT_CMD, with_user] => Some(Command::CreatePrivateChat { with_user: (with_user.to_string()) }),
+        [RESUME_CHAT_CMD, with_user] => Some(Command::ResumeChat { with_user: (with_user.to_string()) }),
+        [CHAT_ROOM_CMD, name, users @..] => {
             let user_list: Vec<String> = users.iter().map(|&user| user.to_string()).collect();
             Some(Command::CreateChatRoom { name: (name.to_string()), users: (user_list) })
         },
-        ["list-chat-rooms"] => Some(Command::ListAllChatRooms),
-        ["list-recipients"] => Some(Command::ListAllRecipients),
-        ["help"] => Some(Command::Help),
-        ["exit"] => Some(Command::Quit),
+        [LIST_CHAT_ROOMS_CMD] => Some(Command::ListAllChatRooms),
+        [LIST_RECIPIENTS_CMD] => Some(Command::ListAllRecipients),
+        [HELP_CMD] => Some(Command::Help),
+        [EXIT_CMD] => Some(Command::Quit),
         _ => None
     }
 }
