@@ -106,7 +106,7 @@ pub async fn exit_private_chat<'a>(
 pub async fn create_chat_room<'a>(
     chat_room_info: Json<ChatRoomRequest>,
     db_manager: &rocket::State<DbManager>,
-) -> Status {
+) -> (Status, Json<String>) {
     let valid_session: bool = is_session_id_valid(
         &chat_room_info.username,
         &chat_room_info.session_id,
@@ -115,7 +115,7 @@ pub async fn create_chat_room<'a>(
     .await;
 
     if !valid_session {
-        return Status::Unauthorized;
+        return (Status::Unauthorized, Json(String::new()));
     }
 
     let members = {
@@ -123,15 +123,15 @@ pub async fn create_chat_room<'a>(
         temp.push(chat_room_info.username.to_owned());
         temp
     };
-    let success: bool = db_manager
+    let res = db_manager
         .insert_chat_room(&chat_room_info.room_name, &members)
         .await;
-    if success {
+    if let Some(chat_room_id) = res {
         println!("Chat room '{}' created", chat_room_info.room_name);
-        Status::Created
+        (Status::Created, Json(chat_room_id))
     } else {
         println!("Failed to create chat room '{}'.", chat_room_info.room_name);
-        Status::InternalServerError
+        (Status::InternalServerError, Json(String::new()))
     }
 }
 

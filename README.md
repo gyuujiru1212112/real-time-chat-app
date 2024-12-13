@@ -84,7 +84,8 @@ CREATE TABLE private_chat (
 * Create the `chat_room` table:
 ```
 CREATE TABLE chat_room (
-    id varchar(255) PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    chat_room_id varchar(255),
     name VARCHAR(100) NOT NULL
 );
 ```
@@ -166,7 +167,7 @@ Sample Curl Requests
 - /chatapp/chat/private-chat/create:    
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
 - /chatapp/chat/chat-room/create:    
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "room_name": "group1", "members": ["test_user1", "test_user2", "test_user3"...]}'`
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
 - /chatapp/chat/chat-room/all:    
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/chat/private-chat/recipients:    

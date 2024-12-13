@@ -140,7 +140,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         prompt = format!("Me ({}): ", user.get_user_name());
                                         // todo use chat_id
                                     }
-                                    None => {}
+                                    None => {
+                                        continue;
+                                    }
                                 }
                             }
                             Some(Command::ListAllRecipients) => {
@@ -158,11 +160,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 let res =
                                     user.create_chat_room(&client, name.clone(), &users).await?;
-                                if res {
-                                    current_mode = "child";
-                                    let enter_msg = format!("Entering chat room {}...", name);
-                                    print_msg(&enter_msg);
-                                    prompt = format!("Me ({}): ", user.get_user_name());
+                                match res {
+                                    Some(chat_room_id) => {
+                                        // todo use chat_room_id
+                                        current_mode = "child";
+                                        let enter_msg = format!("Entering chat room {}...", name);
+                                        print_msg(&enter_msg);
+                                        prompt = format!("Me ({}): ", user.get_user_name());
+                                    }
+                                    None => {
+                                        continue;
+                                    }
                                 }
                             }
                             Some(Command::ListAllChatRooms) => {
