@@ -33,6 +33,23 @@ impl PubSubClient {
         }
     }
 
+    pub async fn reconnect(&mut self) -> Result<(), Error> {
+        let client_builder = ClientBuilder::from_uri(Uri::from_static(PUBSUB_SERVER_ADDRESS));
+        // Make sure existing stream is closed first.
+        let _ = self.stream.close().await;
+
+        match client_builder.connect().await {
+            Ok((stream, _)) => {
+                self.stream = stream;
+                return Ok(());
+            }
+            Err(e) => {
+                println!("Failed to connect to the pub-sub messaging server. {e}");
+                Err(e)
+            }
+        }
+    }
+
     pub async fn subscribe(&mut self, topic: String) -> Result<(), Error> {
         let subscription_message: SubscriptionMessage = SubscriptionMessage {
             topic: topic.clone(),
