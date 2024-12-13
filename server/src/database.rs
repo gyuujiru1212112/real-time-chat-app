@@ -1,3 +1,5 @@
+use std::result;
+
 use sqlx::{mysql::MySqlPool, Error, FromRow, Row};
 use uuid::Uuid;
 
@@ -11,7 +13,7 @@ pub struct User {
 
 #[derive(Debug, FromRow)]
 pub struct ChatRoom {
-    id: i64,
+    chat_room_id: String,
     name: String,
 }
 
@@ -98,6 +100,31 @@ impl DbManager {
                     "Error querying private_chat table for user '{}': {}",
                     username, e
                 );
+                None
+            }
+        }
+    }
+
+    pub async fn get_chat_id(&self, user1: &str, user2: &str) -> Option<String> {
+        // (user1, user2) should be the same as (user2, user1)
+        let (user1, user2) = if user1 < user2 {
+            (user1, user2)
+        } else {
+            (user2, user1)
+        };
+
+        let query = "SELECT chat_id FROM private_chat WHERE user1 = ? AND user2 = ?";
+        let result = sqlx::query(&query)
+            .bind(user1)
+            .bind(user2)
+            .fetch_optional(&self.conn_pool)
+            .await;
+        match result {
+            Ok(row) => {
+                row.map(|r| r.get::<String, _>("chat_id"))
+            }
+            Err(e) => {
+                println!("Failed to retrieve the chat_id: {}", e.to_string());
                 None
             }
         }
@@ -261,7 +288,7 @@ impl DbManager {
     }
 
     pub async fn get_all_chat_rooms(&self) -> Option<Vec<(String, String)>> {
-        let query = "SELECT id, name FROM chat_room";
+        let query = "SELECT chat_room_id, name FROM chat_room";
         let result = sqlx::query_as::<_, ChatRoom>(&query)
             .fetch_all(&self.conn_pool)
             .await;
@@ -272,7 +299,7 @@ impl DbManager {
                 } else {
                     let mut names = Vec::new();
                     for room in chat_rooms {
-                        names.push((room.id.to_string(), room.name));
+                        names.push((room.chat_room_id, room.name));
                     }
                     Some(names)
                 }

@@ -145,6 +145,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     }
                                 }
                             }
+                            Some(Command::ResumeChat { with_user }) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                let res =
+                                    user.resume_private_chat(&client, with_user.clone()).await?;
+                                match res {
+                                    Some(chat_id) => {
+                                        current_mode = "child";
+                                        let enter_msg =
+                                            format!("Entering private chat with {}...", with_user);
+                                        print_msg(&enter_msg);
+                                        prompt = format!("Me ({}): ", user.get_user_name());
+                                        // todo use chat_id
+                                    }
+                                    None => {
+                                        continue;
+                                    }
+                                }
+                            }
                             Some(Command::ListAllRecipients) => {
                                 // check whether session exists
                                 if !user.session_exists() {
