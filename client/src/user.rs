@@ -431,36 +431,6 @@ impl User {
         Ok(())
     }
 
-    // pub async fn join_chat_room(
-    //     &self,
-    //     client: &Client,
-    //     chat_id: String,
-    // ) -> Result<Option<String>, Box<dyn StdError>> {
-    //     let session = self.session.as_ref().unwrap();
-
-    //     let url = "http://localhost:8000/chatapp/chat/chat-room/join"; // endpoint
-
-    //     let chat_room_info = ChatRoomInfo {
-    //         username: session.username.clone(),
-    //         session_id: session.session_id.clone(),
-    //         room_name: room_name.clone(),
-    //         members: Vec::new(),
-    //     };
-
-    //     // Send the POST request
-    //     let response = client.post(url).json(&chat_room_info).send().await?;
-    //     if response.status().is_success() {
-    //         Ok(None)
-    //     } else {
-    //         print_warning_error_msg(&format!(
-    //             "Error: failed to join chat room '{}': {}.",
-    //             room_name,
-    //             response.status()
-    //         ));
-    //         Ok(None)
-    //     }
-    // }
-
     pub async fn list_all_chat_rooms(&self, client: &Client) -> Result<(), Box<dyn StdError>> {
         let url = "http://localhost:8000/chatapp/chat/chat-room/all"; // endpoint
 
