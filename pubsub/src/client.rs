@@ -101,9 +101,16 @@ impl PubSubClient {
                         Ok(None) => return Ok(()),
                         Ok(Some(line)) => {
                             // If there will be more commands, consider making an enum.
-                            if line == "<exit>" {
+                            if line == ":exit" {
+                                println!("Leaving the chat...");
                                 self.unsubscribe().await?;
                                 self.stream.close().await?
+                            } else if line == ":help" {
+                                println!("Chat Room Commands");
+                                println!("------------------");
+                                println!(":help --> Show chat command options");
+                                println!(":exit --> Leave the chat");
+                                ()
                             } else {
                                 let user_message = self.create_user_message(line.to_string());
                                 let message = Message::text(serde_json::to_string(&user_message).unwrap());
