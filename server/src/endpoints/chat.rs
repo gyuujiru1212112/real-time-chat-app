@@ -9,7 +9,7 @@ use super::common::{is_session_id_valid, UserReqInfo};
 
 #[derive(Deserialize, Serialize)]
 pub struct ChatRoomResponse {
-    id: String,
+    room_id: String,
     name: String,
 }
 
@@ -68,7 +68,7 @@ pub async fn create_private_chat<'a>(
 pub async fn resume_private_chat<'a>(
     private_chat_info: Json<PrivateChatRequest>,
     db_manager: &rocket::State<DbManager>,
-) -> Status {
+) -> (Status, Json<String>) {
     let valid_session: bool = is_session_id_valid(
         &private_chat_info.username,
         &private_chat_info.session_id,
@@ -77,10 +77,25 @@ pub async fn resume_private_chat<'a>(
     .await;
 
     if !valid_session {
-        return Status::Unauthorized;
+        return (Status::Unauthorized, Json(String::new()));
     }
 
-    Status::Ok
+    let res = db_manager
+        .get_chat_id(&private_chat_info.username, &private_chat_info.recipient)
+        .await;
+    if let Some(chat_id) = res {
+        println!(
+            "Private chat resumed between users '{}' and '{}'",
+            &private_chat_info.username, &private_chat_info.recipient
+        );
+        (Status::Created, Json(chat_id))
+    } else {
+        println!(
+            "Failed to resume a private chat between users '{}' and '{}'",
+            &private_chat_info.username, &private_chat_info.recipient
+        );
+        (Status::InternalServerError, Json(String::new()))
+    }
 }
 
 #[post("/private-chat/exit", format = "json", data = "<private_chat_info>")]
@@ -198,7 +213,7 @@ pub async fn get_all_chat_rooms(
             let res: Vec<ChatRoomResponse> = rooms
                 .iter()
                 .map(|room| ChatRoomResponse {
-                    id: room.0.clone(),
+                    room_id: room.0.clone(),
                     name: room.1.clone(),
                 })
                 .collect();

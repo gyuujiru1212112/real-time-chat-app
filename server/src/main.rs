@@ -3,7 +3,7 @@ mod endpoints;
 
 use database::DbManager;
 use endpoints::{
-    chat::{create_chat_room, create_private_chat, get_all_chat_rooms, get_all_recipients},
+    chat::{create_chat_room, create_private_chat, get_all_chat_rooms, get_all_recipients, resume_private_chat},
     user::{all_users, login, logout, signup, user_status},
 };
 use rocket::{launch, routes};
@@ -24,7 +24,8 @@ async fn rocket() -> _ {
                 create_private_chat,
                 create_chat_room,
                 get_all_chat_rooms,
-                get_all_recipients
+                get_all_recipients,
+                resume_private_chat
             ],
         )
 }

@@ -1,5 +1,19 @@
 use colored::Colorize;
 
+pub const SIGNUP_CMD: &str = "signup";
+pub const LOGIN_CMD: &str = "login";
+pub const LOGOUT_CMD: &str = "logout";
+pub const LIST_USERS_CMD: &str = "list-users";
+pub const CHECK_USER_STATUS_CMD: &str = "check";
+pub const PRIVATE_CHAT_CMD: &str = "private-chat";
+pub const RESUME_CHAT_CMD: &str = "resume-chat";
+pub const CHAT_ROOM_CMD: &str = "chat-room";
+pub const LIST_CHAT_ROOMS_CMD: &str = "list-chat-rooms";
+pub const JOIN_CHAT_ROOM_CMD: &str = "joint-chat-room";
+pub const LIST_RECIPIENTS_CMD: &str = "list-recipients";
+pub const HELP_CMD: &str = "help";
+pub const EXIT_CMD: &str = "exit";
+
 pub fn print_user_name_rule() {
     let rule = r#"
     The username must satisfy:
@@ -29,9 +43,10 @@ pub fn print_password_rule() {
 
 pub fn print_help_msg_by_default() {
     println!("{}", "Commands:".cyan());
-    println!("Show help message: {}", "help".cyan());
-    println!("Signup: {}", "signup [username] [email] [password]".cyan());
-    println!("Login: {}", "login [username] [password]".cyan());
+    println!("Show help message: {}", HELP_CMD.cyan());
+    println!("Signup: {} {}", SIGNUP_CMD.cyan(), "[username] [email] [password]".cyan());
+    println!("Login: {} {}", LOGIN_CMD.cyan(), "[username] [password]".cyan());
+    println!("Exit {}", EXIT_CMD.cyan());
 
     print_user_name_rule();
     print_password_rule();
@@ -39,16 +54,17 @@ pub fn print_help_msg_by_default() {
 
 pub fn print_help_msg_after_login() {
     println!("{}", "Commands:".cyan());
-    println!("Show help message: {}", "help".cyan());
-    println!("Logout: {}", "logout".cyan());
-    println!("List all the users: {}", "list-users".cyan());
-    println!("Check the status based on username: {}", "check [username]".cyan());
-    println!("Create private chat with a user: {}", "private-chat [with_user_name]".cyan());
-    println!("List all the private chat recipients: {}", "list-recipients".cyan());
-    println!("Resume private chat: []");
-    println!("Create chat room with a list of users: {}", "chat-room [group_name] [user1] [user2] [user3]...".cyan());
-    println!("Join an existing chat room: []");
-    println!("List existing chat rooms: {}", "list-chat-rooms".cyan())
+    println!("Show help message: {}", HELP_CMD.cyan());
+    println!("Logout: {}", LOGOUT_CMD.cyan());
+    println!("List all the users: {}", LIST_USERS_CMD.cyan());
+    println!("Check the status based on username: {} {}", CHECK_USER_STATUS_CMD.cyan(), "[username]".cyan());
+    println!("Create private chat with a user: {} {}", PRIVATE_CHAT_CMD.cyan(), "[with_user_name]".cyan());
+    println!("List all the private chat recipients: {}", LIST_RECIPIENTS_CMD.cyan());
+    println!("Resume private chat: {} {}", RESUME_CHAT_CMD.cyan(), "[recipient]".cyan());
+    println!("Create chat room with a list of users: {} {}", CHAT_ROOM_CMD.cyan(), "[group_name] [user1] [user2] [user3]...".cyan());
+    println!("Join an existing chat room: {} {}", JOIN_CHAT_ROOM_CMD.cyan(), "[id]".cyan());
+    println!("List existing chat rooms: {}", LIST_CHAT_ROOMS_CMD.cyan());
+    println!("Exit {}", EXIT_CMD.cyan());
 }
 
 pub fn print_warning_error_msg(msg: &str) {
