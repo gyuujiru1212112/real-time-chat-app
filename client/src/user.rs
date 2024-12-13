@@ -243,11 +243,11 @@ impl User {
         &mut self,
         client: &Client,
         user: String,
-    ) -> Result<bool, Box<dyn StdError>> {
+    ) -> Result<Option<String>, Box<dyn StdError>> {
         let session = self.session.as_ref().unwrap();
         if user == session.username {
             print_warning_error_msg("You are not allowed to create a private chat with yourself");
-            return Ok(false);
+            return Ok(None);
         }
 
         let url = "http://localhost:8000/chatapp/chat/private-chat/create"; // endpoint
@@ -263,16 +263,26 @@ impl User {
 
         // Check if the response was successful
         if response.status().is_success() {
-            self.ok_response(&format!(
-                "You created a private chat with user '{}' successfully!",
-                user
-            ))
+            // get the chat_id
+            let chat_id: String = response.json().await.expect("Failed to parse JSON");
+            if chat_id.is_empty() {
+                print_warning_error_msg("Error: failed to get the chat id.");
+                Ok(None)
+            } else {
+                print_msg(&format!(
+                    "You created a private chat with user '{}' successfully!",
+                    user
+                ));
+                print_msg(&format!("chat id is {}", chat_id));
+                return Ok(Some(chat_id));
+            }
         } else {
-            self.error_response(&format!(
+            print_warning_error_msg(&format!(
                 "Error: failed to create a private chat with user '{}': {}.",
                 user,
                 response.status()
-            ))
+            ));
+            Ok(None)
         }
     }
 
@@ -293,7 +303,7 @@ impl User {
                 print_msg("No private chat.");
             } else {
                 let formatted = format!("[{}]", recipients.join(", "));
-                println!("{}", formatted);
+                print_msg(&formatted);
             }
         } else {
             print_warning_error_msg(&format!(
