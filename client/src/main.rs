@@ -29,28 +29,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // get the command
     loop {
-        prompt = match current_mode {
-            "child" => String::from(""),
-            _ => String::from(">> "),
-        };
-        let readline = rl.readline(&prompt);
-        match readline {
-            Err(_) => {
-                // logout first
-                if user.session_exists() {
-                    user.logout(&client).await?;
-                }
+        match current_mode {
+            "main" => {
+                let readline = rl.readline(&prompt);
+                match readline {
+                    Err(_) => {
+                        // logout first
+                        if user.session_exists() {
+                            user.logout(&client).await?;
+                        }
 
-                // exit the app
-                print_msg("App is shutting down...");
-                print_msg("Bye!");
-                break;
-            }
-            Ok(input) => {
-                rl.add_history_entry(input.clone());
-
-                match current_mode {
-                    "main" => {
+                        // exit the app
+                        print_msg("App is shutting down...");
+                        print_msg("Bye!");
+                        break;
+                    }
+                    Ok(input) => {
                         match commands::parse_command(&input) {
                             Some(Command::Help) => {
                                 if user.session_exists() {
@@ -153,13 +147,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                     user.get_session_id(),
                                                 )
                                                 .await?;
-                                                pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+                                                pubsub_client =
+                                                    Some(Arc::new(Mutex::new(ps_client)));
                                             }
                                         }
                                         match &pubsub_client {
                                             Some(ps_client) => {
-                                                let _ =
-                                                    ps_client.lock().unwrap().subscribe(chat_id).await;
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_id)
+                                                    .await;
                                             }
                                             None => (),
                                         }
@@ -198,12 +196,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                     user.get_session_id(),
                                                 )
                                                 .await?;
-                                                pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+                                                pubsub_client =
+                                                    Some(Arc::new(Mutex::new(ps_client)));
                                             }
                                         }
                                         match &pubsub_client {
                                             Some(ps_client) => {
-                                                let _ = ps_client.lock().unwrap().subscribe(name).await;
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_room_id)
+                                                    .await;
                                             }
                                             None => (),
                                         }
@@ -236,32 +239,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             ),
                         }
                     }
-                    "child" => {
-                        if input == "exit" {
-                            current_mode = "main";
-                            print_msg("Exiting the chat interface...");
-                            prompt = format!("{} >> ", user.get_user_name());
-                        } else {
-                            // match &pubsub_client {
-                            //     Some(ps_client) => {
-                            //         let _ = ps_client.lock().unwrap().start().await;
-                            //     }
-                            //     None => (),
-                            // }
-                        }
-                    }
-                    _ => {}
-                }
-
-                if current_mode == "child" {
-                    match &pubsub_client {
-                        Some(ps_client) => {
-                            let _ = ps_client.lock().unwrap().start().await;
-                        }
-                        None => (),
-                    }
                 }
             }
+            "child" => match &pubsub_client {
+                Some(ps_client) => {
+                    let _ = ps_client.lock().unwrap().start().await;
+                    current_mode = "main";
+                    continue;
+                }
+                None => (),
+            },
+            _ => {}
         }
     }
 
