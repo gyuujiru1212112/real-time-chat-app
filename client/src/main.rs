@@ -1,9 +1,12 @@
 mod commands;
-mod user;
 mod common;
+mod user;
 
 use commands::{is_valid_email_addr, is_valid_password, is_valid_username, Command};
-use common::{print_help_msg_after_login, print_help_msg_by_default, print_session_exists_error_msg, print_session_not_exist_error_msg, print_msg, print_warning_error_msg};
+use common::{
+    print_help_msg_after_login, print_help_msg_by_default, print_msg,
+    print_session_exists_error_msg, print_session_not_exist_error_msg, print_warning_error_msg,
+};
 use reqwest::Client;
 use user::User;
 
@@ -49,22 +52,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_help_msg_by_default();
                                 }
                             }
-                            Some(Command::Signup { username, email, password }) => {
+                            Some(Command::Signup {
+                                username,
+                                email,
+                                password,
+                            }) => {
                                 // check whether session exists
                                 if user.session_exists() {
                                     print_warning_error_msg("You have already logged in!");
                                     print_warning_error_msg("Please log out first!");
                                     continue;
                                 }
-        
-                                if !is_valid_username(&username) || !is_valid_email_addr(&email) || !is_valid_password(&password)
+
+                                if !is_valid_username(&username)
+                                    || !is_valid_email_addr(&email)
+                                    || !is_valid_password(&password)
                                 {
                                     continue;
                                 }
-        
-                                user.signup(&client, username.to_string(),
+
+                                user.signup(
+                                    &client,
+                                    username.to_string(),
                                     email.to_string(),
-                                    password.to_string()).await?;
+                                    password.to_string(),
+                                )
+                                .await?;
                             }
                             Some(Command::Login { username, password }) => {
                                 // check whether session exists
@@ -72,8 +85,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_exists_error_msg();
                                     continue;
                                 }
-        
-                                let res = user.login(&client, &username.to_string(), password.to_string()).await?;
+
+                                let res = user
+                                    .login(&client, &username.to_string(), password.to_string())
+                                    .await?;
                                 if res {
                                     prompt = format!("{} >> ", user.get_user_name());
                                 }
@@ -84,7 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-        
+
                                 let res = user.logout(&client).await?;
                                 if res {
                                     prompt = String::from(">> ");
@@ -96,7 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-        
+
                                 user.list_users(&client).await?;
                             }
                             Some(Command::CheckUserStatus { username }) => {
@@ -105,7 +120,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-        
+
                                 user.check_user_status(&client, username).await?;
                             }
                             Some(Command::CreatePrivateChat { with_user }) => {
@@ -114,12 +129,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-                                let res = user.create_private_chat(&client, with_user.clone()).await?;
-                                if res {
-                                    current_mode = "child";
-                                    let enter_msg = format!("Entering private chat with {}...", with_user);
-                                    print_msg(&enter_msg);
-                                    prompt = format!("Me ({}): ", user.get_user_name());
+                                let res =
+                                    user.create_private_chat(&client, with_user.clone()).await?;
+                                match res {
+                                    Some(chat_id) => {
+                                        current_mode = "child";
+                                        let enter_msg =
+                                            format!("Entering private chat with {}...", with_user);
+                                        print_msg(&enter_msg);
+                                        prompt = format!("Me ({}): ", user.get_user_name());
+                                        // todo use chat_id
+                                    }
+                                    None => {}
                                 }
                             }
                             Some(Command::ListAllRecipients) => {
@@ -135,7 +156,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-                                let res = user.create_chat_room(&client, name.clone(), &users).await?;
+                                let res =
+                                    user.create_chat_room(&client, name.clone(), &users).await?;
                                 if res {
                                     current_mode = "child";
                                     let enter_msg = format!("Entering chat room {}...", name);
@@ -155,15 +177,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 if user.session_exists() {
                                     user.logout(&client).await?;
                                 }
-        
+
                                 // exit the app
                                 print_msg("App is shutting down...");
                                 print_msg("Bye!");
                                 break;
                             }
-                            None => {
-                                print_warning_error_msg("Unknown command. Type 'help' to see available commands.")
-                            }
+                            None => print_warning_error_msg(
+                                "Unknown command. Type 'help' to see available commands.",
+                            ),
                         }
                     }
                     "child" => {
@@ -172,12 +194,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             print_msg("Exiting the chat interface...");
                             prompt = format!("{} >> ", user.get_user_name());
                         } else {
-                            // todo messaging
+                            // todo send message
                         }
                     }
-                    _ => {
-                        
-                    }
+                    _ => {}
                 }
             }
         }
