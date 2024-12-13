@@ -2,7 +2,7 @@
 This is the final project for ECE1724: Special Topics in Software Engineering @UofT
 ## Team Members:
 - Kayleigh McNeil [1001278164]
-  - email:
+  - email: kayleigh.mcneil@mail.utoronto.ca
 - Yiduo Jing [1000308142]
   - email: yiduo.jing@mail.utoronto.ca
 
