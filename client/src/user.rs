@@ -280,7 +280,7 @@ impl User {
                     "You created a private chat with user '{}' successfully!",
                     user
                 ));
-                print_msg(&format!("chat id is {}", chat_id));
+                print_msg(&format!("Chat id is {}", chat_id));
                 return Ok(Some(chat_id));
             }
         } else {
@@ -331,13 +331,13 @@ impl User {
         client: &Client,
         room_name: String,
         members: &Vec<String>,
-    ) -> Result<bool, Box<dyn StdError>> {
+    ) -> Result<Option<String>, Box<dyn StdError>> {
         let session = self.session.as_ref().unwrap();
 
         let unique_members: HashSet<String> = members.iter().cloned().collect();
         if unique_members.is_empty() {
-            return self
-                .error_response("You are not allowed to create a group chat without members");
+            print_warning_error_msg("You are not allowed to create a group chat without members");
+            return Ok(None)
         }
 
         let chat_room_info = ChatRoomInfo {
@@ -355,19 +355,29 @@ impl User {
                 if response.status().is_success() {
                     let msg = format!("You created a chat room '{}' successfully!", room_name);
                     print_msg(&msg);
-                    Ok(true)
+                    let chat_room_id: String = response.json().await.expect("Failed to parse JSON");
+                    if chat_room_id.is_empty() {
+                        return Ok(None);
+                    } else {
+                        print_msg(&format!("Chat room id is {}", chat_room_id));
+                        return Ok(Some(chat_room_id));
+                    }
                 } else {
-                    self.error_response(&format!(
+                    print_warning_error_msg(&format!(
                         "Failed to create chat room '{}': {}.",
                         room_name,
                         response.status()
-                    ))
+                    ));
+                    Ok(None)
                 }
             }
-            Err(error) => self.error_response(&format!(
-                "Failed to create chat room '{}': {}.",
-                room_name, error
-            )),
+            Err(error) => {
+                print_warning_error_msg(&format!(
+                    "Failed to create chat room '{}': {}.",
+                    room_name, error
+                ));
+                Ok(None)
+            }
         }
     }
 

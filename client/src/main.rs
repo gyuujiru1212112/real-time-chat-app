@@ -164,7 +164,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             None => (),
                                         }
                                     }
-                                    None => {}
+                                    None => {
+                                        continue;
+                                    }
                                 }
                             }
                             Some(Command::ListAllRecipients) => {
@@ -182,28 +184,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 let res =
                                     user.create_chat_room(&client, name.clone(), &users).await?;
-                                if res {
-                                    current_mode = "child";
-                                    let enter_msg = format!("Entering chat room {}...", name);
-                                    print_msg(&enter_msg);
-                                    match pubsub_client {
-                                        Some(_) => (),
-                                        None => {
-                                            let ps_client = PubSubClient::new(
-                                                user.get_user_name(),
-                                                user.get_session_id(),
-                                            )
-                                            .await?;
-                                            pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+
+                                match res {
+                                    Some(chat_room_id) => {
+                                        current_mode = "child";
+                                        let enter_msg = format!("Entering chat room {}...", name);
+                                        print_msg(&enter_msg);
+                                        match pubsub_client {
+                                            Some(_) => (),
+                                            None => {
+                                                let ps_client = PubSubClient::new(
+                                                    user.get_user_name(),
+                                                    user.get_session_id(),
+                                                )
+                                                .await?;
+                                                pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+                                            }
+                                        }
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client.lock().unwrap().subscribe(name).await;
+                                            }
+                                            None => (),
                                         }
                                     }
-                                    match &pubsub_client {
-                                        Some(ps_client) => {
-                                            let _ = ps_client.lock().unwrap().subscribe(name).await;
-                                        }
-                                        None => (),
+                                    None => {
+                                        continue;
                                     }
-                                    // pubsub_client.unwrap().lock().unwrap().subscribe(name);
                                 }
                             }
                             Some(Command::ListAllChatRooms) => {
