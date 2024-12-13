@@ -8,17 +8,17 @@ This is the final project for ECE1724: Special Topics in Software Engineering @U
 
 ## Motivation and Objectives
 
-Developing a real-time chat application offers our team an exciting opportunity to deepen our understanding and practice a range of advanced concepts and techniques in Rust. The project's primary focus is to design a robust system capable of supporting real-time communication, which will require the application of messaging patterns and concurrency principles—two areas we are eager to explore.  
+Developing a real-time chat application offers our team an exciting opportunity to deepen our understanding and practice a range of advanced concepts and techniques in Rust. The project's primary focus is to design a robust system capable of supporting real-time communication, which will require the application of messaging patterns and concurrency principles—two areas we are eager to explore.
 
-One of the key technical challenges is implementing a **publish-subscribe messaging pattern** to ensure all users in a chat room receive messages in the same order and in real time. This pattern is well-suited for handling messaging involving multiple users in a dynamic and scalable manner, making it critical for supporting large chat rooms effectively.  
+One of the key technical challenges is implementing a **publish-subscribe messaging pattern** to ensure all users in a chat room receive messages in the same order and in real time. This pattern is well-suited for handling messaging involving multiple users in a dynamic and scalable manner, making it critical for supporting large chat rooms effectively.
 
-Another important aspect is the use of **concurrency in Rust**. On the server side, concurrency will enable the handling of simultaneous user requests, database interactions, and the seamless operation of the publish-subscribe messaging service. On the client side, concurrency will allow users to send and receive messages simultaneously, ensuring that sending a message does not interrupt the ability to receive messages from others.  
+Another important aspect is the use of **concurrency in Rust**. On the server side, concurrency will enable the handling of simultaneous user requests, database interactions, and the seamless operation of the publish-subscribe messaging service. On the client side, concurrency will allow users to send and receive messages simultaneously, ensuring that sending a message does not interrupt the ability to receive messages from others.
 
-The overall objective of this project is to create a **real-time chat application** that supports two types of communication:  
-1. **Private chats** between two users.  
-2. **Chat rooms** where multiple users can participate simultaneously.  
+The overall objective of this project is to create a **real-time chat application** that supports two types of communication:
+1. **Private chats** between two users.
+2. **Chat rooms** where multiple users can participate simultaneously.
 
-To achieve this, the application will employ the **WebSocket communication protocol** to enable real-time messaging and incorporate the publish-subscribe pattern to maintain message consistency and delivery order. By undertaking this project, we aim to gain hands-on experience with real-world challenges in messaging systems, concurrency, and Rust's ecosystem, all while delivering a functional and efficient chat application.  
+To achieve this, the application will employ the **WebSocket communication protocol** to enable real-time messaging and incorporate the publish-subscribe pattern to maintain message consistency and delivery order. By undertaking this project, we aim to gain hands-on experience with real-world challenges in messaging systems, concurrency, and Rust's ecosystem, all while delivering a functional and efficient chat application.
 
 ## Features:
 - The ability to create new users
@@ -92,7 +92,7 @@ CREATE TABLE chat_room (
 ```
 CREATE TABLE room_member (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_id BIGINT NOT NULL,
+    room_id VARCHAR(255) NOT NULL,
     username VARCHAR(255)  NOT NULL,
     FOREIGN KEY (room_id) REFERENCES chat_room(id) ON DELETE CASCADE,
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE,
@@ -153,23 +153,23 @@ CREATE TABLE room_member (
 
 Sample Curl Requests
 
-- /chatapp/user/signup:  
+- /chatapp/user/signup:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/signup' --header 'Content-Type: application/json' --data '{"username": "test_user", "email": "test.user@gmail.com", "password": "testpwd"}'`
-- /chatapp/user/login:  
+- /chatapp/user/login:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/login' --header 'Content-Type: application/json' --data '{"username": "test_user", "password": "testpwd"}'`
-- /chatapp/user/logout:  
+- /chatapp/user/logout:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
-- /chatapp/user/status?username:  
+- /chatapp/user/status?username:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allusers:    
+- /chatapp/user/allusers:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/create:    
+- /chatapp/chat/private-chat/create:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/chat-room/create:    
+- /chatapp/chat/chat-room/create:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "room_name": "group1", "members": ["test_user1", "test_user2", "test_user3"...]}'`
-- /chatapp/chat/chat-room/all:    
+- /chatapp/chat/chat-room/all:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/recipients:    
+- /chatapp/chat/private-chat/recipients:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 
@@ -179,7 +179,7 @@ Sample Curl Requests
 - Yiduo Jing:
   - Rocket application & client setup
   - CLI commands for
-  - API endpoints for 
+  - API endpoints for
   - Report
 
 
