@@ -1,8 +1,10 @@
 # real-time-chat-app
-This is the final project for ECE1724H F1 LEC0101 20249:Special Topics in Software Engineering @UofT
+This is the final project for ECE1724: Special Topics in Software Engineering @UofT
 ## Team Members:
-Kayleigh McNeil [1001278164], Yiduo Jing [1000308142]
-Contact: yiduo.jing@mail.utoronto.ca
+- Kayleigh McNeil [1001278164]
+  - email:
+- Yiduo Jing [1000308142]
+  - email: yiduo.jing@mail.utoronto.ca
 
 ## Motivation and Objectives
 
@@ -71,7 +73,7 @@ CREATE TABLE user (
 * Create the `private_chat` table:
 ```
 CREATE TABLE private_chat (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    chat_id VARCHAR(255),
     user1 VARCHAR(255) NOT NULL,
     user2 VARCHAR(255) NOT NULL,
     FOREIGN KEY (user1) REFERENCES user(username) ON DELETE CASCADE,
@@ -82,7 +84,7 @@ CREATE TABLE private_chat (
 * Create the `chat_room` table:
 ```
 CREATE TABLE chat_room (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id varchar(255) PRIMARY KEY,
     name VARCHAR(100) NOT NULL
 );
 ```
@@ -109,10 +111,10 @@ CREATE TABLE room_member (
   - List all the users: `list-users`
   - Check the status based on username: `check [username]`
   - Create private chat with a user: `private-chat [with_user_name]`
-  - Resume private chat: `resume-chat []`
+  - Resume private chat: `resume-chat [recipient]`
   - List all the private chat recipients: `list-recipients`
   - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
-  - Join an existing chat room: `[]`
+  - Join an existing chat room: `joint-chat-room [id]`
   - List existing chat rooms: `list-chat-rooms`
   - Quit the program: `exit`
 
@@ -173,8 +175,12 @@ Sample Curl Requests
 
 
 ## Contributions by each team member:
-Kayleigh McNeil:
-Yiduo Jing:
+- Kayleigh McNeil:
+- Yiduo Jing:
+  - Rocket application & client setup
+  - CLI commands for
+  - API endpoints for 
+  - Report
 
 
 ## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.

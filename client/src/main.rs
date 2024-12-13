@@ -138,34 +138,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 let res =
                                     user.create_private_chat(&client, with_user.clone()).await?;
-                                if res {
-                                    current_mode = "child";
-                                    let enter_msg =
-                                        format!("Entering private chat with {}...", with_user);
-                                    print_msg(&enter_msg);
-                                    match &pubsub_client {
-                                        Some(_) => (),
-                                        None => {
-                                            let ps_client = PubSubClient::new(
-                                                user.get_user_name(),
-                                                user.get_session_id(),
-                                            )
-                                            .await?;
-                                            pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
-                                        }
-                                    }
-                                    let topic = format!("{}---{}", user.get_user_name(), with_user);
-                                    // pubsub_client.unwrap().lock().unwrap().subscribe(topic);
-                                    match &pubsub_client {
-                                        Some(ps_client) => {
-                                            let _ =
-                                                ps_client.lock().unwrap().subscribe(topic).await;
-                                        }
-                                        None => (),
-                                    }
 
-                                    // pubsub_client.unwrap().subscribe(topic);
-                                    // prompt = format!("Me ({}): ", user.get_user_name());
+                                match res {
+                                    Some(chat_id) => {
+                                        current_mode = "child";
+                                        let enter_msg =
+                                            format!("Entering private chat with {}...", with_user);
+                                        print_msg(&enter_msg);
+                                        match &pubsub_client {
+                                            Some(_) => (),
+                                            None => {
+                                                let ps_client = PubSubClient::new(
+                                                    user.get_user_name(),
+                                                    user.get_session_id(),
+                                                )
+                                                .await?;
+                                                pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+                                            }
+                                        }
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ =
+                                                    ps_client.lock().unwrap().subscribe(chat_id).await;
+                                            }
+                                            None => (),
+                                        }
+                                    }
+                                    None => {}
                                 }
                             }
                             Some(Command::ListAllRecipients) => {
@@ -198,8 +197,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
                                         }
                                     }
-                                    // prompt = format!("Me ({}): ", user.get_user_name());
-                                    // let topic = format!("{}---{}", user.get_user_name(), with_user);
                                     match &pubsub_client {
                                         Some(ps_client) => {
                                             let _ = ps_client.lock().unwrap().subscribe(name).await;

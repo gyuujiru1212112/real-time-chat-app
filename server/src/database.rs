@@ -1,4 +1,5 @@
 use sqlx::{mysql::MySqlPool, Row, Error, FromRow};
+use uuid::Uuid;
 
 #[derive(FromRow)]
 pub struct User {
@@ -32,8 +33,14 @@ impl DbManager {
         }
     }
 
-    pub async fn insert_private_chat(&self, user1: &str, user2: &str) -> bool
+    pub async fn insert_private_chat(&self, user1: &str, user2: &str) -> Option<String>
     {
+        // (user1, user2) should be the same as (user2, user1)
+        let (user1, user2) = if user1 < user2 {
+            (user1, user2)
+        } else {
+            (user2, user1)
+        };
         let query = format!(
             "INSERT INTO private_chat (user1, user2) VALUES (\"{}\", \"{}\");",
             user1, user2
@@ -41,10 +48,19 @@ impl DbManager {
 
         let result = sqlx::query(&query).execute(&self.conn_pool).await;
         match result {
-            Ok(_) => true,
+            Ok(_) => {
+                // update chat_id
+                let chat_id = Uuid::new_v4().to_string();
+                println!("Chat id created");
+                if self.set_chat_id(user1, user2, &chat_id).await {
+                    Some(chat_id)
+                } else {
+                    None
+                }
+            },
             Err(e) => {
                 println!("Error inserting private_chat between users '{}' and '{}' : {}", user1, user2, e.to_string());
-                false
+                None
             }
         }
     }
@@ -158,6 +174,28 @@ impl DbManager {
         }
     }
 
+    async fn set_chat_id(
+        &self,
+        user1: &str,
+        user2: &str,
+        chat_id: &str,
+    ) -> bool {
+        let query = "UPDATE private_chat SET chat_id = ? WHERE user1 = ? AND user2 = ?";
+        let result = sqlx::query(&query)
+            .bind(chat_id)
+            .bind(user1)
+            .bind(user2)
+            .execute(&self.conn_pool)
+            .await;
+        match result {
+            Ok(_) => true,
+            Err(e) => {
+                println!("Error inserting chat id for chat between '{}' and '{}' : {}", user1, user2, e.to_string());
+                false
+            }
+        }
+    }
+
     pub async fn get_user(&self, username: &String) -> Option<User> {
         let query = format!("SELECT * FROM user WHERE username = \"{}\";", username);
         let result = sqlx::query_as::<_, User>(&query)
@@ -209,15 +247,4 @@ impl DbManager {
             }
         }
     }
-
-    // pub async fn execute(&self, query: &str) -> bool {
-    //     let result = sqlx::query(query).execute(&self.conn_pool).await;
-    //     match result {
-    //         Ok(query_result) => true,
-    //         Err(e) => {
-    //             println!("Error executing query {} : {}", query, e.to_string());
-    //             false
-    //         }
-    //     }
-    // }
 }
