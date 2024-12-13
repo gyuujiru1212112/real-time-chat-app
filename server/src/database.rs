@@ -120,9 +120,7 @@ impl DbManager {
             .fetch_optional(&self.conn_pool)
             .await;
         match result {
-            Ok(row) => {
-                row.map(|r| r.get::<String, _>("chat_id"))
-            }
+            Ok(row) => row.map(|r| r.get::<String, _>("chat_id")),
             Err(e) => {
                 println!("Failed to retrieve the chat_id: {}", e.to_string());
                 None

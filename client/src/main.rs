@@ -244,6 +244,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     }
                                 }
                             }
+                            Some(Command::JoinChatRoom { chat_id }) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                let res = user.join_chat_room(&client, chat_id.clone()).await;
+                                match res {
+                                    Ok(()) => {
+                                        current_mode = "child";
+                                        let enter_msg =
+                                            format!("Entering chat room with id {}...", chat_id);
+                                        print_msg(&enter_msg);
+
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_id)
+                                                    .await;
+                                            }
+                                            None => {
+                                                println!("Unable to join chat room. PubSub client is not initialized.");
+                                            }
+                                        }
+                                    }
+                                    Err(_) => {
+                                        continue;
+                                    }
+                                }
+                            }
                             Some(Command::ListAllChatRooms) => {
                                 if !user.session_exists() {
                                     print_session_not_exist_error_msg();
@@ -276,6 +308,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // reconnect the stream so that the user can reuse the same pubsub client.
                     // Will improve this later if there is time.
                     let _ = ps_client.lock().unwrap().reconnect().await;
+                    println!("Exited the chat");
                     current_mode = "main";
                     prompt = format!("{} >> ", user.get_user_name());
                     continue;
