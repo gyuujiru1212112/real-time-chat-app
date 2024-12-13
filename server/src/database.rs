@@ -1,4 +1,4 @@
-use sqlx::{mysql::MySqlPool, Row, Error, FromRow};
+use sqlx::{mysql::MySqlPool, Error, FromRow, Row};
 use uuid::Uuid;
 
 #[derive(FromRow)]
@@ -33,8 +33,7 @@ impl DbManager {
         }
     }
 
-    pub async fn insert_private_chat(&self, user1: &str, user2: &str) -> Option<String>
-    {
+    pub async fn insert_private_chat(&self, user1: &str, user2: &str) -> Option<String> {
         // (user1, user2) should be the same as (user2, user1)
         let (user1, user2) = if user1 < user2 {
             (user1, user2)
@@ -57,16 +56,20 @@ impl DbManager {
                 } else {
                     None
                 }
-            },
+            }
             Err(e) => {
-                println!("Error inserting private_chat between users '{}' and '{}' : {}", user1, user2, e.to_string());
+                println!(
+                    "Error inserting private_chat between users '{}' and '{}' : {}",
+                    user1,
+                    user2,
+                    e.to_string()
+                );
                 None
             }
         }
     }
 
-    pub async fn get_all_chat_recipients(&self, username: &str) -> Option<Vec<String>>
-    {
+    pub async fn get_all_chat_recipients(&self, username: &str) -> Option<Vec<String>> {
         let query = r#"
             SELECT user1 AS partner
             FROM private_chat
@@ -80,59 +83,71 @@ impl DbManager {
         let result = sqlx::query(&query)
             .bind(username)
             .bind(username)
-            .fetch_all(&self.conn_pool).await;
+            .fetch_all(&self.conn_pool)
+            .await;
 
         match result {
             Ok(partner_rows) => {
-                let partners = partner_rows.iter()
-                    .map(|row| row.get("partner")).collect();
+                let partners = partner_rows.iter().map(|row| row.get("partner")).collect();
 
                 Some(partners)
             }
 
             Err(e) => {
-                println!("Error querying private_chat table for user '{}': {}", username, e);
+                println!(
+                    "Error querying private_chat table for user '{}': {}",
+                    username, e
+                );
                 None
             }
         }
-
     }
 
-    pub async fn insert_chat_room(&self, name: &str, users: &Vec<String>) -> bool {
+    pub async fn insert_chat_room(&self, name: &str, users: &Vec<String>) -> Option<String> {
         if users.is_empty() {
             println!("Cannot create the chat room '{}' without members", name);
-            return false
+            return None;
         }
         // insert the chat room
-        let query = 
-            "INSERT INTO chat_room (name) VALUES (?)";
-        let room_id = match sqlx::query(&query)
+        let query = "INSERT INTO chat_room (name) VALUES (?)";
+        let id = match sqlx::query(&query)
             .bind(name)
             .execute(&self.conn_pool)
             .await
-            {
-                Ok(result) => result.last_insert_id(),
-                Err(e) => {
-                    println!("Error inserting chat room '{}' : {}", name, e.to_string());
-                    return false
-                }
-            };
+        {
+            Ok(result) => result.last_insert_id(),
+            Err(e) => {
+                println!("Error inserting chat room '{}' : {}", name, e.to_string());
+                return None;
+            }
+        };
 
         // insert the members
         let insert_user_query = "INSERT INTO room_member (room_id, username) VALUES (?, ?)";
-        for user in users
-        {
+        for user in users {
             if let Err(e) = sqlx::query(&insert_user_query)
-                .bind(room_id)
+                .bind(id)
                 .bind(user)
                 .execute(&self.conn_pool)
                 .await
-                {
-                    println!("Failed to insert user '{}' into room {}: {}", user, name, e.to_string());
-                };
+            {
+                println!(
+                    "Failed to insert user '{}' into room {}: {}",
+                    user,
+                    name,
+                    e.to_string()
+                );
+            };
         }
 
-        true
+        // update chat_room_id
+        let chat_room_id = Uuid::new_v4().to_string();
+        let res = self.set_chat_room_id(id, name, &chat_room_id).await;
+        if res {
+            Some(chat_room_id)
+        } else {
+            None
+        }
     }
 
     pub async fn insert_user(&self, username: &String, email: &String, password: &String) -> bool {
@@ -174,12 +189,7 @@ impl DbManager {
         }
     }
 
-    async fn set_chat_id(
-        &self,
-        user1: &str,
-        user2: &str,
-        chat_id: &str,
-    ) -> bool {
+    async fn set_chat_id(&self, user1: &str, user2: &str, chat_id: &str) -> bool {
         let query = "UPDATE private_chat SET chat_id = ? WHERE user1 = ? AND user2 = ?";
         let result = sqlx::query(&query)
             .bind(chat_id)
@@ -190,7 +200,33 @@ impl DbManager {
         match result {
             Ok(_) => true,
             Err(e) => {
-                println!("Error inserting chat id for chat between '{}' and '{}' : {}", user1, user2, e.to_string());
+                println!(
+                    "Error inserting chat id for chat between '{}' and '{}' : {}",
+                    user1,
+                    user2,
+                    e.to_string()
+                );
+                false
+            }
+        }
+    }
+
+    async fn set_chat_room_id(&self, id: u64, room_name: &str, chat_id: &str) -> bool {
+        let query = "UPDATE chat_room SET chat_room_id = ? WHERE id = ? AND name = ?";
+        let result = sqlx::query(&query)
+            .bind(chat_id)
+            .bind(id)
+            .bind(room_name)
+            .execute(&self.conn_pool)
+            .await;
+        match result {
+            Ok(_) => true,
+            Err(e) => {
+                println!(
+                    "Error inserting chat id for chat room '{}': {}",
+                    room_name,
+                    e.to_string()
+                );
                 false
             }
         }
@@ -226,7 +262,8 @@ impl DbManager {
 
     pub async fn get_all_chat_rooms(&self) -> Option<Vec<(String, String)>> {
         let query = "SELECT id, name FROM chat_room";
-        let result= sqlx::query_as::<_, ChatRoom>(&query).fetch_all(&self.conn_pool)
+        let result = sqlx::query_as::<_, ChatRoom>(&query)
+            .fetch_all(&self.conn_pool)
             .await;
         match result {
             Ok(chat_rooms) => {
@@ -234,8 +271,7 @@ impl DbManager {
                     None
                 } else {
                     let mut names = Vec::new();
-                    for room in chat_rooms
-                    {
+                    for room in chat_rooms {
                         names.push((room.id.to_string(), room.name));
                     }
                     Some(names)
