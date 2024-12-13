@@ -123,9 +123,10 @@ Once logged in, the following commands are available:
 | /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
 | /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE"<br>or "INACTIVE"<br>or "NOT_FOUND" |
 | /chatapp/user/allusers | GET | username,<br>session_id | N/A | [{"username":"user1","status":""},{"username":"user2","status":""},{"username":"user3","status":""}...] |
-| /chatapp/chat/private-chat/create | POST | N/A | {"username":"", "session_id":"", "recipient":""} | N/A |
-| /chatapp/chat/chat-room/create | POST | N/A |     {username:"", "session_id":"", "room_name":"", "members": ["", "", ""...]} | N/A |
-| /chatapp/chat/chat-room/all | GET | username,<br>session_id | N/A | [{"id":"1","name":"group1"},{"id":"2","name":"group2"},{"id":"3","name":"group3"}...] |
+| /chatapp/chat/private-chat/create | POST | N/A | {"username":"", "session_id":"", "recipient":""} | chat_id |
+| /chatapp/chat/private-chat/resume | POST | N/A | {"username":"", "session_id":"", "recipient":""} | chat_id |
+| /chatapp/chat/chat-room/create | POST | N/A |     {username:"", "session_id":"", "room_name":"", "members": ["", "", ""...]} | chat_room_id |
+| /chatapp/chat/chat-room/all | GET | username,<br>session_id | N/A | ["room_id1", "room_id2", "room_id3"...] |
 | /chatapp/chat/private-chat/recipients | GET | username,<br>session_id | N/A | ["recipient1", "recipient2"...] |
 
 Sample Curl Requests
@@ -142,6 +143,8 @@ Sample Curl Requests
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/chat/private-chat/create:    
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
+- /chatapp/chat/private-chat/resume:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/resume' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
 - /chatapp/chat/chat-room/create:    
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
 - /chatapp/chat/chat-room/all:    
