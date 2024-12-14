@@ -190,6 +190,7 @@ CREATE TABLE room_member (
 ```
 ### Build & Run
 * **Start the server first** (only one instance): `cargo run -p server`
+* **Start the messaging server**: `cargo run -p pubsub --bin run_server`
 * **Run each client** (multiple instances allowed): `cargo run -p client`
 
 
@@ -197,10 +198,11 @@ CREATE TABLE room_member (
 ## Contributions by each team member:
 - **Kayleigh McNeil**:
 - **Yiduo Jing**:
-  - Rocket application & client setup
-  - CLI commands for
-  - API endpoints for 
-  - Report
+  - Developed the initial client setup.
+  - Designed the CLI utility with rustyline for user interaction.
+  - Implemented CLI commands for features such as signup, login, logout, listing all users, checking user status, initiating/resuming private chats, creating chat rooms, listing all recipients, and listing all chat rooms.
+  - Built API endpoints to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
+  - Contributed to the project report.
 
 
 ## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.
