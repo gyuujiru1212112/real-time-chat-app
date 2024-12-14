@@ -84,6 +84,13 @@ impl User {
             .unwrap_or_else(|| String::from(""))
     }
 
+    pub fn get_session_id(&self) -> String {
+        self.session
+            .as_ref()
+            .map(|session| session.session_id.clone())
+            .unwrap_or_else(|| String::from(""))
+    }
+
     pub fn session_exists(&mut self) -> bool {
         self.session.is_some()
     }
@@ -416,7 +423,11 @@ impl User {
         }
     }
 
-    async fn resume_chat_room(client: &Client, chatId: String) -> Result<(), Box<dyn StdError>> {
+    pub async fn join_chat_room(
+        &self,
+        client: &Client,
+        chatId: String,
+    ) -> Result<(), Box<dyn StdError>> {
         Ok(())
     }
 
