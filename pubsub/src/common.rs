@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-pub const PUBSUB_HOST_PORT: &str = "127.0.0.1:8080";
+pub const PUBSUB_HOST_PORT: &str = "0.0.0.0:8080";
 pub const PUBSUB_SERVER_ADDRESS: &str = "ws://127.0.0.1:8080";
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
