@@ -10,12 +10,18 @@ use endpoints::{
     user::{all_users, login, logout, signup, user_status},
 };
 use rocket::{launch, routes};
+use std::env;
 
 #[launch]
 #[tokio::main]
 async fn rocket() -> _ {
-    let db_url: String = String::from("mysql://chatserver:ServerPass123@localhost:3306/chatapp");
+    // let db_url: String = String::from("mysql://chatserver:ServerPass123@localhost:3306/chatapp");
+    let db_url: String = env::var("MYSQL_URL").unwrap_or(String::from(
+        "mysql://chatserver:ServerPass123@localhost:3306/chatapp",
+    ));
+    let config = rocket::Config::figment().merge(("address", "0.0.0.0"));
     rocket::build()
+        .configure(config)
         .manage::<DbManager>(DbManager::new(db_url).await.unwrap())
         .mount(
             "/chatapp/user/",

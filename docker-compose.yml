@@ -1,0 +1,39 @@
+services:
+  mysqldb:
+    image: mysql:9
+    # restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MYSQL_ROOT_PASSWORD: dbpwd
+      MYSQL_USER: chatserver
+      MYSQL_PASSWORD: ServerPass123
+      MYSQL_DATABASE: chatapp
+    # ports:
+    #   - 3306:3306
+    volumes:
+      - ./mysql:/docker-entrypoint-initdb.d
+
+  chatapp_server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: chatapp_server:latest
+    ports:
+      - 8000:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MYSQL_URL: mysql://chatserver:ServerPass123@host.docker.internal:3306/chatapp
+
+  chatapp_pubsub:
+    build:
+      context: .
+      dockerfile: pubsub/Dockerfile
+    image: chatapp_pubsub:latest
+    ports:
+      - 8080:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MYSQL_URL: mysql://chatserver:ServerPass123@host.docker.internal:3306/chatapp

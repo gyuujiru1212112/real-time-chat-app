@@ -1,6 +1,5 @@
 use sqlx::{mysql::MySqlPool, Error, FromRow};
-
-const DB_URL: &str = "mysql://chatserver:ServerPass123@localhost:3306/chatapp";
+use std::env;
 
 #[derive(FromRow)]
 pub struct User {
@@ -22,7 +21,11 @@ pub struct DbManager {
 
 impl DbManager {
     pub async fn new() -> Result<DbManager, Error> {
-        match MySqlPool::connect(DB_URL).await {
+        let db_url: String = env::var("MYSQL_URL").unwrap_or(String::from(
+            "mysql://chatserver:ServerPass123@localhost:3306/chatapp",
+        ));
+
+        match MySqlPool::connect(&db_url).await {
             Ok(pool) => {
                 println!("Connected to db!");
                 Ok(DbManager { conn_pool: pool })
