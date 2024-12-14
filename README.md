@@ -1,11 +1,10 @@
 # Real-Time Chat Application
-*This is the final project for ECE1724: Special Topics in Software Engineering @ UofT*
 
-## Team Members
-- **Kayleigh McNeil** [1001278164]
-  - Email: 
-- **Yiduo Jing** [1000308142]
-  - Email: yiduo.jing@mail.utoronto.ca
+## Team Members:
+- Kayleigh McNeil [1001278164]
+  - email: kayleigh.mcneil@mail.utoronto.ca
+- Yiduo Jing [1000308142]
+  - email: yiduo.jing@mail.utoronto.ca
 
 ## Motivation and Objectives
 Developing a real-time chat application offers our team an exciting opportunity to deepen our understanding and practice a range of advanced concepts and techniques in Rust. The project's primary focus is to design a robust system capable of supporting real-time communication, which will require the application of messaging patterns and concurrency principles—two areas we are eager to explore.
@@ -93,6 +92,11 @@ Once logged in, the following commands are available:
   Lists all existing chat rooms.
 - **`exit`**  
   Exits the program.
+  
+#### Commands available inside a chat session
+  - `:help` - Show chat command options.
+  - `:exit` - Leave the chat and return to main app command line.
+
 
 ### Server
 
@@ -133,6 +137,9 @@ Once logged in, the following commands are available:
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 - /chatapp/chat/private-chat/recipients:    
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+
+### Pub-Sub Messaging Service
+- Start the pub-sub server: `cargo run -p pubsub --bin run_server`
 
 ## Reproducibility Guide:
 
@@ -188,15 +195,16 @@ CREATE TABLE room_member (
     UNIQUE (room_id, username)
 );
 ```
+
 ### Build & Run
 * **Start the server first** (only one instance): `cargo run -p server`
 * **Start the messaging server**: `cargo run -p pubsub --bin run_server`
 * **Run each client** (multiple instances allowed): `cargo run -p client`
 
-
-
 ## Contributions by each team member:
 - **Kayleigh McNeil**:
+  - Pub-Sub messaging service
+  - Integration of pub-sub messaging service into app
 - **Yiduo Jing**:
   - Developed the initial client setup.
   - Designed the CLI utility with rustyline for user interaction.

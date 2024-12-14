@@ -151,7 +151,7 @@ pub async fn create_chat_room<'a>(
 }
 
 #[post("/chat-room/join", format = "json", data = "<chat_room_info>")]
-pub async fn joint_chat_room<'a>(
+pub async fn join_chat_room<'a>(
     chat_room_info: Json<ChatRoomRequest>,
     db_manager: &rocket::State<DbManager>,
 ) -> Status {

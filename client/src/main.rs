@@ -7,7 +7,9 @@ use common::{
     print_help_msg_after_login, print_help_msg_by_default, print_msg,
     print_session_exists_error_msg, print_session_not_exist_error_msg, print_warning_error_msg,
 };
+use pubsub::client::PubSubClient;
 use reqwest::Client;
+use std::sync::{Arc, Mutex};
 use user::User;
 
 #[tokio::main]
@@ -23,27 +25,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new();
     let mut user = User::new();
     let mut prompt = String::from(">> ");
+    let mut pubsub_client: Option<Arc<Mutex<PubSubClient>>> = None;
 
     // get the command
     loop {
-        let readline = rl.readline(&prompt);
-        match readline {
-            Err(_) => {
-                // logout first
-                if user.session_exists() {
-                    user.logout(&client).await?;
-                }
+        match current_mode {
+            "main" => {
+                let readline = rl.readline(&prompt);
+                match readline {
+                    Err(_) => {
+                        // logout first
+                        if user.session_exists() {
+                            user.logout(&client).await?;
+                        }
 
-                // exit the app
-                print_msg("App is shutting down...");
-                print_msg("Bye!");
-                break;
-            }
-            Ok(input) => {
-                rl.add_history_entry(input.clone());
-
-                match current_mode {
-                    "main" => {
+                        // exit the app
+                        print_msg("App is shutting down...");
+                        print_msg("Bye!");
+                        break;
+                    }
+                    Ok(input) => {
                         match commands::parse_command(&input) {
                             Some(Command::Help) => {
                                 if user.session_exists() {
@@ -91,6 +92,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     .await?;
                                 if res {
                                     prompt = format!("{} >> ", user.get_user_name());
+
+                                    // Create PubSub client on login.
+                                    match &pubsub_client {
+                                        Some(_) => (),
+                                        None => {
+                                            let ps_client = PubSubClient::new(
+                                                user.get_user_name(),
+                                                user.get_session_id(),
+                                            )
+                                            .await?;
+                                            pubsub_client = Some(Arc::new(Mutex::new(ps_client)));
+                                        }
+                                    }
                                 }
                             }
                             Some(Command::Logout) => {
@@ -103,6 +117,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let res = user.logout(&client).await?;
                                 if res {
                                     prompt = String::from(">> ");
+                                    // Remove PubSub client on logout.
+                                    pubsub_client = None;
                                 }
                             }
                             Some(Command::ListUsers) => {
@@ -131,14 +147,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 let res =
                                     user.create_private_chat(&client, with_user.clone()).await?;
+
                                 match res {
                                     Some(chat_id) => {
                                         current_mode = "child";
                                         let enter_msg =
                                             format!("Entering private chat with {}...", with_user);
                                         print_msg(&enter_msg);
-                                        prompt = format!("Me ({}): ", user.get_user_name());
-                                        // todo use chat_id
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_id)
+                                                    .await;
+                                            }
+                                            None => {
+                                                println!("Unable to join private chat. PubSub client is not initialized.");
+                                            }
+                                        }
                                     }
                                     None => {
                                         continue;
@@ -159,8 +186,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         let enter_msg =
                                             format!("Entering private chat with {}...", with_user);
                                         print_msg(&enter_msg);
-                                        prompt = format!("Me ({}): ", user.get_user_name());
-                                        // todo use chat_id
+
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_id)
+                                                    .await;
+                                            }
+                                            None => {
+                                                println!("Unable to join chat room. PubSub client is not initialized.");
+                                            }
+                                        }
                                     }
                                     None => {
                                         continue;
@@ -182,15 +220,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 let res =
                                     user.create_chat_room(&client, name.clone(), &users).await?;
+
                                 match res {
                                     Some(chat_room_id) => {
-                                        // todo use chat_room_id
                                         current_mode = "child";
                                         let enter_msg = format!("Entering chat room {}...", name);
                                         print_msg(&enter_msg);
-                                        prompt = format!("Me ({}): ", user.get_user_name());
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_room_id)
+                                                    .await;
+                                            }
+                                            None => {
+                                                println!("Unable to join chat room. PubSub client is not initialized.");
+                                            }
+                                        }
                                     }
                                     None => {
+                                        continue;
+                                    }
+                                }
+                            }
+                            Some(Command::JoinChatRoom { chat_id }) => {
+                                // check whether session exists
+                                if !user.session_exists() {
+                                    print_session_not_exist_error_msg();
+                                    continue;
+                                }
+                                let res = user.join_chat_room(&client, chat_id.clone()).await;
+                                match res {
+                                    Ok(()) => {
+                                        current_mode = "child";
+                                        let enter_msg =
+                                            format!("Entering chat room with id {}...", chat_id);
+                                        print_msg(&enter_msg);
+
+                                        match &pubsub_client {
+                                            Some(ps_client) => {
+                                                let _ = ps_client
+                                                    .lock()
+                                                    .unwrap()
+                                                    .subscribe(chat_id)
+                                                    .await;
+                                            }
+                                            None => {
+                                                println!("Unable to join chat room. PubSub client is not initialized.");
+                                            }
+                                        }
+                                    }
+                                    Err(_) => {
                                         continue;
                                     }
                                 }
@@ -218,18 +299,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             ),
                         }
                     }
-                    "child" => {
-                        if input == "exit" {
-                            current_mode = "main";
-                            print_msg("Exiting the chat interface...");
-                            prompt = format!("{} >> ", user.get_user_name());
-                        } else {
-                            // todo send message
-                        }
-                    }
-                    _ => {}
                 }
             }
+            "child" => match &pubsub_client {
+                Some(ps_client) => {
+                    let _ = ps_client.lock().unwrap().start().await;
+                    // This is kind of hacky but to exit the chat, the stream is closed so
+                    // reconnect the stream so that the user can reuse the same pubsub client.
+                    // Will improve this later if there is time.
+                    let _ = ps_client.lock().unwrap().reconnect().await;
+                    println!("Exited the chat");
+                    current_mode = "main";
+                    prompt = format!("{} >> ", user.get_user_name());
+                    continue;
+                }
+                None => (),
+            },
+            _ => {}
         }
     }
 
