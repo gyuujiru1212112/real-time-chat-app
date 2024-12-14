@@ -1,5 +1,5 @@
-# real-time-chat-app
-This is the final project for ECE1724: Special Topics in Software Engineering @UofT
+# Real-Time Chat Application
+
 ## Team Members:
 - Kayleigh McNeil [1001278164]
   - email: kayleigh.mcneil@mail.utoronto.ca
@@ -7,7 +7,6 @@ This is the final project for ECE1724: Special Topics in Software Engineering @U
   - email: yiduo.jing@mail.utoronto.ca
 
 ## Motivation and Objectives
-
 Developing a real-time chat application offers our team an exciting opportunity to deepen our understanding and practice a range of advanced concepts and techniques in Rust. The project's primary focus is to design a robust system capable of supporting real-time communication, which will require the application of messaging patterns and concurrency principles—two areas we are eager to explore.
 
 One of the key technical challenges is implementing a **publish-subscribe messaging pattern** to ensure all users in a chat room receive messages in the same order and in real time. This pattern is well-suited for handling messaging involving multiple users in a dynamic and scalable manner, making it critical for supporting large chat rooms effectively.
@@ -20,39 +19,135 @@ The overall objective of this project is to create a **real-time chat applicatio
 
 To achieve this, the application will employ the **WebSocket communication protocol** to enable real-time messaging and incorporate the publish-subscribe pattern to maintain message consistency and delivery order. By undertaking this project, we aim to gain hands-on experience with real-world challenges in messaging systems, concurrency, and Rust's ecosystem, all while delivering a functional and efficient chat application.
 
-## Features:
-- The ability to create new users
+## Features
+- Create new users
 - Authenticate users with a simple username and password combination
-- A command-line interface that allows a user to execute actions when running the application
-- Users will have the ability to execute the following command-line actions:
+- Command-line interface (CLI) for user actions
+- User actions:
   - Sign up to create a new user
-  - Show help messages
+  - View help messages
   - Login and logout
   - View a list of other users with their status
-  - Check the activity status of a specific user based on their username
+  - Check the activity status of a specific user
   - Create a new private chat
   - Resume an existing private chat
-  - List all the recipients with whom the user has a private chat with
+  - List all recipients with whom the user has a private chat
   - Create a new chat room
   - Join an existing chat room
   - List existing chat rooms
   - Exit from a private chat or chat room
-  - Send and receive messages in real-time in:
-    - A private chat between two users
-    - A chat room with many active users
+  - Send and receive messages in real-time:
+    - In a private chat between two users
+    - In a chat room with many active users
 - View chat history when resuming a private chat or joining an existing chat room
-- A publish-subscribe messaging service that clients connect to using Websockets for bidirectional communication of messages
+- Publish-subscribe messaging service with WebSocket for bidirectional communication
 
-## User’s (or Developer’s) Guide: How does a user — or developer, if the project is a crate — use each of the main features in the project deliverable?
+## User’s Guide
+
+### Client (Command-line Utility)
+This command-line interface is built using the rustyline crate, **enabling command history navigation with the up/down arrow keys**. It also supports **copying and pasting** text into the command line input.
+
+#### Before Login
+- **Signup & Login Rules:**
+  - **Username Requirements:**
+    1. Length must be between 5 and 20 characters.
+    2. Must start with a letter.
+    3. Only alphanumeric characters (a-z, A-Z, 0-9), underscores (_), and dots (.) are allowed.
+    4. No consecutive underscores or dots (e.g., `__` or `..`).
+    5. Cannot end with an underscore or dot.
+  - **Password Requirements:**
+    1. Length must be between 6 and 16 characters.
+    2. Must contain at least one digit (0-9) and at least one special character (!@#$%^&*).
+    3. Can only contain letters (a-z, A-Z), digits (0-9), and special characters (!@#$%^&*).
+
+#### Commands Available Before Login
+- **`help`**  
+  Displays the help message, showing available commands.
+- **`signup [username] [email] [password]`**  
+  Signs up a new account with the provided username, email, and password.
+- **`login [username] [password]`**  
+  Logs in with the provided username and password.
+- **`exit`**  
+  Exits the program.
+
+#### After Login
+Once logged in, the following commands are available:
+- **`logout`**  
+  Logs out from the current session.
+- **`list-users`**  
+  Lists all users in the system.
+- **`check [username]`**  
+  Checks the online status of a specific user.
+- **`private-chat [with_user_name]`**  
+  Initiates a private chat with the specified user.
+- **`resume-chat [recipient]`**  
+  Resumes an ongoing private chat with the specified recipient.
+- **`list-recipients`**  
+  Lists all the users you have had private chats with.
+- **`chat-room [group_name] [user1] [user2] [user3]...`**  
+  Creates a new chat room with the specified group name and users.
+- **`join-chat-room [id]`**  
+  Joins an existing chat room by its ID.
+- **`list-chat-rooms`**  
+  Lists all existing chat rooms.
+- **`exit`**  
+  Exits the program.
+  
+#### Commands available inside a chat session
+  - `:help` - Show chat command options.
+  - `:exit` - Leave the chat and return to main app command line.
+
+
+### Server
+
+#### API Endpoints
+
+| Route | Method | Headers | Body Parameters | Return Body |
+|-------|--------|---------|------------------|--------------|
+| /chatapp/user/signup | POST | N/A | {"username": "", "email": "", "password": ""} | N/A |
+| /chatapp/user/login | POST | N/A | {"username": "", "password": ""} | {"message": "Success", "session_id": ""} |
+| /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
+| /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE" or "INACTIVE" or "NOT_FOUND" |
+| /chatapp/user/allusers | GET | username,<br>session_id | N/A | [{"username":"user1","status":""},{"username":"user2","status":""},{"username":"user3","status":""}...] |
+| /chatapp/chat/private-chat/create | POST | N/A | {"username":"", "session_id":"", "recipient":""} | chat_id |
+| /chatapp/chat/private-chat/resume | POST | N/A | {"username":"", "session_id":"", "recipient":""} | chat_id |
+| /chatapp/chat/chat-room/create | POST | N/A | {"username":"", "session_id":"", "room_name":"", "members": ["", "", ""]} | chat_room_id |
+| /chatapp/chat/chat-room/all | GET | username,<br>session_id | N/A | ["room_id1", "room_id2", "room_id3"] |
+| /chatapp/chat/private-chat/recipients | GET | username,<br>session_id | N/A | ["recipient1", "recipient2"] |
+
+#### Sample Curl Requests
+
+- /chatapp/user/signup:  
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/signup' --header 'Content-Type: application/json' --data '{"username": "test_user", "email": "test.user@gmail.com", "password": "testpwd"}'`
+- /chatapp/user/login:  
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/login' --header 'Content-Type: application/json' --data '{"username": "test_user", "password": "testpwd"}'`
+- /chatapp/user/logout:  
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
+- /chatapp/user/status?username:  
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+- /chatapp/user/allusers:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+- /chatapp/chat/private-chat/create:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
+- /chatapp/chat/private-chat/resume:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/resume' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
+- /chatapp/chat/chat-room/create:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
+- /chatapp/chat/chat-room/all:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+- /chatapp/chat/private-chat/recipients:    
+    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
+
+### Pub-Sub Messaging Service
+- Start the pub-sub server: `cargo run -p pubsub --bin run_server`
 
 ## Reproducibility Guide:
 
-### MySQL Database
-
+### Environment Setup
 (Adding some quick notes here for now. Will tidy them up later.)
 
-* Install MySQL with homebrew and configure a root user and password
-* Start up the service: `brew services start mysql`
+* **Install MySQL**: homebrew and configure a root user and password
+* **Start up the service**: `brew services start mysql`
 * `mysql -u root -p`
 * Create the db for the app and create a user to be used by the app when connecting to the db:
 ```
@@ -101,96 +196,21 @@ CREATE TABLE room_member (
 );
 ```
 
-
-### Client
-- Start the client program: `cargo run -p client`
-- Commands available inside the program:
-  - Show help message: `help`
-  - Signup: `signup [username] [email] [password]`
-  - Login: `login [username] [password]`
-  - Logout: `logout`
-  - List all the users: `list-users`
-  - Check the status based on username: `check [username]`
-  - Create private chat with a user: `private-chat [with_user_name]`
-  - Resume private chat: `resume-chat [recipient]`
-  - List all the private chat recipients: `list-recipients`
-  - Create chat room with a list of users: `chat-room [group_name] [user1] [user2] [user3]...`
-  - Join an existing chat room: `joint-chat-room [id]`
-  - List existing chat rooms: `list-chat-rooms`
-  - Quit the program: `exit`
-
-- Rules:
-  - The username must satisfy:
-    1. Number of characters must be between 5 and 20
-    2. Must start with a letter.
-    3. Only alphanumeric characters (a-z, A-Z, 0-9), underscores (_) and dots (.) are allowed.
-    4. No consecutive underscores or dots (e.g., __ or ..).
-    5. No underscore or dot at the end.
-  - The password must satisfy:
-    1. Number of characters must be between 6 and 16.
-    2. Must contain:
-        - At least one digit (0-9).
-        - At least one special character (!@#$%^&*).
-    3. Can only contain:
-       - Letters (a-z, A-Z).
-       - Digits (0-9).
-       - Special characters (!@#$%^&*).
-
-- Commands available inside a chat session:
-  - `:help` - Show chat command options.
-  - `:exit` - Leave the chat and return to main app command line.
-
-### Server
-
-#### API Endpoints
-
-| Route | Method | Headers | Body Parameters | Return Body |
-| -------- | ------- | ------- | ------- | ------- |
-| /chatapp/user/signup | POST | N/A | {"username": "", "email": "", "password": ""} | N/A |
-| /chatapp/user/login | POST | N/A | {"username": "", "password": ""} | {"message": "Success", "session_id": ""} |
-| /chatapp/user/logout | POST | N/A | {"username": "", "session_id": ""} | N/A |
-| /chatapp/user/status?username | GET | username,<br>session_id | N/A | "ACTIVE"<br>or "INACTIVE"<br>or "NOT_FOUND" |
-| /chatapp/user/allusers | GET | username,<br>session_id | N/A | [{"username":"user1","status":""},{"username":"user2","status":""},{"username":"user3","status":""}...] |
-| /chatapp/chat/private-chat/create | POST | N/A | {"username":"", "session_id":"", "recipient":""} | N/A |
-| /chatapp/chat/chat-room/create | POST | N/A |     {username:"", "session_id":"", "room_name":"", "members": ["", "", ""...]} | N/A |
-| /chatapp/chat/chat-room/all | GET | username,<br>session_id | N/A | [{"id":"1","name":"group1"},{"id":"2","name":"group2"},{"id":"3","name":"group3"}...] |
-| /chatapp/chat/private-chat/recipients | GET | username,<br>session_id | N/A | ["recipient1", "recipient2"...] |
-
-Sample Curl Requests
-
-- /chatapp/user/signup:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/signup' --header 'Content-Type: application/json' --data '{"username": "test_user", "email": "test.user@gmail.com", "password": "testpwd"}'`
-- /chatapp/user/login:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/login' --header 'Content-Type: application/json' --data '{"username": "test_user", "password": "testpwd"}'`
-- /chatapp/user/logout:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
-- /chatapp/user/status?username:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allusers:
-    `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/create:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/chat-room/create:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
-- /chatapp/chat/chat-room/all:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/recipients:
-    `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-
-
-### Pub-Sub Messaging Service
-- Start the pub-sub server: `cargo run -p pubsub --bin run_server`
-
+### Build & Run
+* **Start the server first** (only one instance): `cargo run -p server`
+* **Start the messaging server**: `cargo run -p pubsub --bin run_server`
+* **Run each client** (multiple instances allowed): `cargo run -p client`
 
 ## Contributions by each team member:
-- Kayleigh McNeil:
+- **Kayleigh McNeil**:
   - Pub-Sub messaging service
   - Integration of pub-sub messaging service into app
-- Yiduo Jing:
-  - Rocket application & client setup
-  - CLI commands for
-  - API endpoints for
-  - Report
+- **Yiduo Jing**:
+  - Developed the initial client setup.
+  - Designed the CLI utility with rustyline for user interaction.
+  - Implemented CLI commands for features such as signup, login, logout, listing all users, checking user status, initiating/resuming private chats, creating chat rooms, listing all recipients, and listing all chat rooms.
+  - Built API endpoints to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
+  - Contributed to the project report.
 
 
 ## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.
