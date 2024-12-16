@@ -95,7 +95,7 @@ pub fn print_help_msg_after_login() {
         "[id]".cyan()
     );
     println!("List existing chat rooms: {}", LIST_CHAT_ROOMS_CMD.cyan());
-    println!("Exit {}", EXIT_CMD.cyan());
+    println!("Exit: {}", EXIT_CMD.cyan());
 }
 
 pub fn print_warning_error_msg(msg: &str) {
