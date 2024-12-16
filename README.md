@@ -92,11 +92,10 @@ Once logged in, the following commands are available:
   Lists all existing chat rooms.
 - **`exit`**  
   Exits the program.
-  
+
 #### Commands available inside a chat session
   - `:help` - Show chat command options.
   - `:exit` - Leave the chat and return to main app command line.
-
 
 ### Server
 
@@ -125,92 +124,67 @@ Once logged in, the following commands are available:
     `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
 - /chatapp/user/status?username:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allusers:    
+- /chatapp/user/allusers:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/create:    
+- /chatapp/chat/private-chat/create:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/private-chat/resume:    
+- /chatapp/chat/private-chat/resume:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/resume' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/chat-room/create:    
+- /chatapp/chat/chat-room/create:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
-- /chatapp/chat/chat-room/all:    
+- /chatapp/chat/chat-room/all:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/recipients:    
+- /chatapp/chat/private-chat/recipients:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 ### Pub-Sub Messaging Service
-- Start the pub-sub server: `cargo run -p pubsub --bin run_server`
+The messaging service of the application uses a publisher-subscriber messaging pattern. The WebSocket communications protocol is used for communication between publishers/subscribers and the messaging server.
+
+The pub-sub messaging service is made up of the following main components:
+* **Server** - The messaging server that starts up the TCP listener, accepts and handles new connections, and uses the broker to route messages.
+* **Broker** - Keeps track of existing subscribers and the topics they are subscribed to. The broker is responsible for routing messages received by the server to the appropriate subscribers. The broker also uses the database manager to validate user sessions when a new subscription request is received to ensure only active, valid users are able to subscribe to topics.
+* **DB Manager** - A database manager for handling a connection to the MySQL db for the purpose of validating user sessions when a subscription message from a user is received by the server.
+* **Client** - A module that can be used by other rust modules to connect to the messaging server, subscribe to topics, and send and receive messages.
+
+### MySQL Database
+
+There are four tables used as part of this application for keeping a record of users and chats. The SQL commands used to create these tables can be found in the `mysql/dump.sql` file in this repository.
+
+Tables
+| Table Name | Description |
+|------------|-------------|
+| user | Contains an entry for each user. Users must have unique usernames. When a user is logged in, the active session_id for that user is stored in this table for verification purposes. |
+| private_chat | A record of the existing private chats that exist between pairs of users and their unique chat ids. |
+| chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
+| room_member | |
 
 ## Reproducibility Guide:
 
-### Environment Setup
-(Adding some quick notes here for now. Will tidy them up later.)
-
-* **Install MySQL**: homebrew and configure a root user and password
-* **Start up the service**: `brew services start mysql`
-* `mysql -u root -p`
-* Create the db for the app and create a user to be used by the app when connecting to the db:
-```
-CREATE DATABASE chatapp;
-CREATE USER ‘chatserver’@‘localhost' IDENTIFIED BY ‘ServerPass123’;
-GRANT ALL ON chatapp.* TO 'chatserver'@'localhost';
-```
-* Create the `user` table:
-```
-CREATE TABLE user (
-    username varchar(255) NOT NULL,
-    email varchar(255),
-    password varchar(255) NOT NULL,
-    session_id varchar(255),
-    PRIMARY KEY (username)
-);
-```
-* Create the `private_chat` table:
-```
-CREATE TABLE private_chat (
-    chat_id VARCHAR(255),
-    user1 VARCHAR(255) NOT NULL,
-    user2 VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user1) REFERENCES user(username) ON DELETE CASCADE,
-    FOREIGN KEY (user2) REFERENCES user(username) ON DELETE CASCADE,
-    UNIQUE (user1, user2)
-);
-```
-* Create the `chat_room` table:
-```
-CREATE TABLE chat_room (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    chat_room_id varchar(255),
-    name VARCHAR(100) NOT NULL
-);
-```
-* Create the `room_member` table:
-```
-CREATE TABLE room_member (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_id BIGINT NOT NULL,
-    username VARCHAR(255)  NOT NULL,
-    FOREIGN KEY (room_id) REFERENCES chat_room(id) ON DELETE CASCADE,
-    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE,
-    UNIQUE (room_id, username)
-);
-```
-
 ### Build & Run
-* **Start the server first** (only one instance): `cargo run -p server`
-* **Start the messaging server**: `cargo run -p pubsub --bin run_server`
-* **Run each client** (multiple instances allowed): `cargo run -p client`
+
+1. Install Docker and Docker Compose if not already installed
+2. Navigate to the root directory of this project (`real-time-chat-app/`)
+3. Build and run the server-side components using docker-compose:
+  ```
+  docker-compose build
+  docker-compose up -d
+  ```
+  * This will start up three docker containers running in the background: `mysqldb`, `chatapp_server`, and `chatapp_pubsub`.
+4. Run one or more instances of the client to interact with the application: `cargo run --release -p client`
+
 
 ## Contributions by each team member:
 - **Kayleigh McNeil**:
-  - Pub-Sub messaging service
-  - Integration of pub-sub messaging service into app
+  - Developed initial server setup with Rocket and sqlx.
+  - Designed and developed the pub-sub messaging service using tokio and tokio_websockets.
+  - Integrated the pub-sub messaging service into the applicaiton.
+  - Dockerized the server, pub-sub service, and mysql db components.
+  - Contributed to the project report.
 - **Yiduo Jing**:
   - Developed the initial client setup.
   - Designed the CLI utility with rustyline for user interaction.
   - Implemented CLI commands for features such as signup, login, logout, listing all users, checking user status, initiating/resuming private chats, creating chat rooms, listing all recipients, and listing all chat rooms.
   - Built API endpoints to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
   - Contributed to the project report.
-
 
 ## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.

@@ -1,0 +1,48 @@
+services:
+  mysqldb:
+    image: mysql:9
+    container_name: mysqldb
+    environment:
+      MYSQL_ROOT_PASSWORD: dbpwd
+      MYSQL_USER: chatserver
+      MYSQL_PASSWORD: ServerPass123
+      MYSQL_DATABASE: chatapp
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql:/docker-entrypoint-initdb.d
+    networks:
+      - chatapp-network
+
+  chatapp_server:
+    depends_on:
+      - mysqldb
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: chatapp_server:latest
+    container_name: chatapp_server
+    ports:
+      - 8000:8000
+    environment:
+      MYSQL_URL: mysql://chatserver:ServerPass123@mysqldb:3306/chatapp
+    networks:
+      - chatapp-network
+
+  chatapp_pubsub:
+    depends_on:
+      - mysqldb
+    build:
+      context: .
+      dockerfile: pubsub/Dockerfile
+    image: chatapp_pubsub:latest
+    container_name: chatapp_pubsub
+    ports:
+      - 8080:8080
+    environment:
+      MYSQL_URL: mysql://chatserver:ServerPass123@mysqldb:3306/chatapp
+    networks:
+      - chatapp-network
+
+networks:
+  chatapp-network:
