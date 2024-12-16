@@ -61,36 +61,36 @@ This command-line interface is built using the rustyline crate, **enabling comma
     3. Can only contain letters (a-z, A-Z), digits (0-9), and special characters (!@#$%^&*).
 
 #### Commands Available Before Login
-- **`help`**
+- **`help`**  
   Displays the help message, showing available commands.
-- **`signup [username] [email] [password]`**
+- **`signup [username] [email] [password]`**  
   Signs up a new account with the provided username, email, and password.
-- **`login [username] [password]`**
+- **`login [username] [password]`**  
   Logs in with the provided username and password.
-- **`exit`**
+- **`exit`**  
   Exits the program.
 
 #### After Login
 Once logged in, the following commands are available:
-- **`logout`**
+- **`logout`**  
   Logs out from the current session.
-- **`list-users`**
+- **`list-users`**  
   Lists all users in the system.
-- **`check [username]`**
+- **`check [username]`**  
   Checks the online status of a specific user.
-- **`private-chat [with_user_name]`**
+- **`private-chat [with_user_name]`**  
   Initiates a private chat with the specified user.
-- **`resume-chat [recipient]`**
+- **`resume-chat [recipient]`**  
   Resumes an ongoing private chat with the specified recipient.
-- **`list-recipients`**
+- **`list-recipients`**  
   Lists all the users you have had private chats with.
-- **`chat-room [group_name] [user1] [user2] [user3]...`**
+- **`chat-room [group_name] [user1] [user2] [user3]...`**  
   Creates a new chat room with the specified group name and users.
-- **`join-chat-room [id]`**
+- **`join-chat-room [id]`**  
   Joins an existing chat room by its ID.
-- **`list-chat-rooms`**
+- **`list-chat-rooms`**  
   Lists all existing chat rooms.
-- **`exit`**
+- **`exit`**  
   Exits the program.
 
 #### Commands available inside a chat session
@@ -116,25 +116,25 @@ Once logged in, the following commands are available:
 
 #### Sample Curl Requests
 
-- /chatapp/user/signup:
+- /chatapp/user/signup:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/signup' --header 'Content-Type: application/json' --data '{"username": "test_user", "email": "test.user@gmail.com", "password": "testpwd"}'`
-- /chatapp/user/login:
+- /chatapp/user/login:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/login' --header 'Content-Type: application/json' --data '{"username": "test_user", "password": "testpwd"}'`
-- /chatapp/user/logout:
+- /chatapp/user/logout:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/logout' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf"}'`
-- /chatapp/user/status?username:
+- /chatapp/user/status?username:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/status?username=test_user2' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/user/allusers:
+- /chatapp/user/allusers:  
     `curl --location 'http://127.0.0.1:8000/chatapp/user/allusers' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/create:
+- /chatapp/chat/private-chat/create:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/private-chat/resume:
+- /chatapp/chat/private-chat/resume:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/resume' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "f043ab79-032c-43d6-957e-6b78241632bf", "recipient": "test_user2"}'`
-- /chatapp/chat/chat-room/create:
+- /chatapp/chat/chat-room/create:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/create' --header 'Content-Type: application/json' --data '{"username": "test_user", "session_id": "92458410-2077-4ef3-a7c8-0be76c6122bb", "room_name": "group1", "members": ["test_user1", "test_user2"...]}'`
-- /chatapp/chat/chat-room/all:
+- /chatapp/chat/chat-room/all:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/chat-room/all' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
-- /chatapp/chat/private-chat/recipients:
+- /chatapp/chat/private-chat/recipients:  
     `curl --location 'http://127.0.0.1:8000/chatapp/chat/private-chat/recipients' --header 'username: test_user' --header 'session_id: f043ab79-032c-43d6-957e-6b78241632bf'`
 
 ### Pub-Sub Messaging Service
