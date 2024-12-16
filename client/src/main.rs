@@ -244,7 +244,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-                                let res = user.join_chat_room(&client, chat_id.clone()).await;
+                                let res = user.join_chat_room().await;
                                 match res {
                                     Ok(()) => {
                                         current_mode = "child";
