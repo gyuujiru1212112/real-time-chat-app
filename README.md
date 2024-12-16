@@ -156,7 +156,7 @@ Tables
 | user | Contains an entry for each user. Users must have unique usernames. When a user is logged in, the active session_id for that user is stored in this table for verification purposes. |
 | private_chat | A record of the existing private chats that exist between pairs of users and their unique chat ids. |
 | chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
-| room_member | |
+| room_member | A record of the team members of the chat room with their associated names and chat_room ids. |
 
 ## Reproducibility Guide:
 
