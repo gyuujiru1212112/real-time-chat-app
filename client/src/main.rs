@@ -34,15 +34,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let readline = rl.readline(&prompt);
                 match readline {
                     Err(_) => {
-                        // logout first
-                        if user.session_exists() {
-                            user.logout(&client).await?;
-                        }
-
-                        // exit the app
-                        print_msg("App is shutting down...");
-                        print_msg("Bye!");
-                        break;
+                        current_mode = "main";
+                        prompt = format!("{} >> ", user.get_user_name());
+                        continue;
                     }
                     Ok(input) => {
                         match commands::parse_command(&input) {
