@@ -191,7 +191,7 @@ Tables
 **Lessons Learned**
 - Developed a strong knowledge of real-time communication by building a messaging service using the publish-subscribe model with WebSockets.
 - Gained skills in using Rocket to create API endpoints and handle routing efficiently.
-- Earned experience using SQL to design and work with a MySQL database service.
+- Earned experience using sqlx to design and work with a MySQL database service.
 
 The project related to the real-time chat application was full of challenges and rewarding experiences. It allowed us to apply the knowledge from the lectures in practice. Throughout this project, we deepened our understanding of real-time systems, user authentication, and the complexities of developing scalable and user-friendly applications.
 
