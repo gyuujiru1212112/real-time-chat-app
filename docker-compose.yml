@@ -1,6 +1,7 @@
 services:
   mysqldb:
     image: mysql:9
+    container_name: mysqldb
     environment:
       MYSQL_ROOT_PASSWORD: dbpwd
       MYSQL_USER: chatserver
@@ -20,6 +21,7 @@ services:
       context: .
       dockerfile: server/Dockerfile
     image: chatapp_server:latest
+    container_name: chatapp_server
     ports:
       - 8000:8000
     environment:
@@ -34,6 +36,7 @@ services:
       context: .
       dockerfile: pubsub/Dockerfile
     image: chatapp_pubsub:latest
+    container_name: chatapp_pubsub
     ports:
       - 8080:8080
     environment:
