@@ -424,9 +424,7 @@ impl User {
     }
 
     pub async fn join_chat_room(
-        &self,
-        client: &Client,
-        chatId: String,
+        &self
     ) -> Result<(), Box<dyn StdError>> {
         Ok(())
     }

@@ -94,8 +94,8 @@ Once logged in, the following commands are available:
   Exits the program.
 
 #### Commands available inside a chat session
-  - `:help` - Show chat command options.
-  - `:exit` - Leave the chat and return to main app command line.
+  - **`:help`** - Show chat command options.
+  - **`:exit`** - Leave the chat and return to main app command line.
 
 ### Server
 
@@ -156,7 +156,7 @@ Tables
 | user | Contains an entry for each user. Users must have unique usernames. When a user is logged in, the active session_id for that user is stored in this table for verification purposes. |
 | private_chat | A record of the existing private chats that exist between pairs of users and their unique chat ids. |
 | chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
-| room_member | |
+| room_member | A record of the team members of the chat room with their associated names and chat_room ids. |
 
 ## Reproducibility Guide:
 
@@ -184,7 +184,15 @@ Tables
   - Developed the initial client setup.
   - Designed the CLI utility with rustyline for user interaction.
   - Implemented CLI commands for features such as signup, login, logout, listing all users, checking user status, initiating/resuming private chats, creating chat rooms, listing all recipients, and listing all chat rooms.
-  - Built API endpoints to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
+  - Built API endpoints with Rocket and sqlx to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
   - Contributed to the project report.
 
-## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.
+## Lessons learned and concluding remarks
+**Lessons Learned**
+- Developed a strong knowledge of real-time communication by building a messaging service using the publish-subscribe model with WebSockets.
+- Gained skills in using Rocket to create API endpoints and handle routing efficiently.
+- Earned experience using sqlx to design and work with a MySQL database service.
+
+The project related to the real-time chat application was full of challenges and rewarding experiences. It allowed us to apply the knowledge from the lectures in practice. Throughout this project, we deepened our understanding of real-time systems, user authentication, and the complexities of developing scalable and user-friendly applications.
+
+While the completed project meets the essential requirements, there are areas where we can improve. Potential enhancements include increasing performance, implementing encryption for secure communication, and improving the user interface to a front-end application. Overall, this project has taught us valuable lessons and equipped us with a deeper understanding of complex systems.
