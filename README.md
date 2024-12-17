@@ -161,7 +161,7 @@ Tables
 | room_member | A record of the team members of the chat room with their associated names and chat_room ids. |
 
 ## Reproducibility Guide:
-
+Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1gwnKXG9gDT_5GfdXjOmID5IH8WGt7XPE/view?usp=sharing).
 ### Build & Run
 
 1. Install Docker and Docker Compose if not already installed
