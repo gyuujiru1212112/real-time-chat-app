@@ -26,3 +26,11 @@ CREATE TABLE room_member (
     FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE,
     UNIQUE (room_id, username)
 );
+CREATE TABLE chat_message (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    chat_id VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    message VARCHAR(255),
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (username) REFERENCES user(username) ON DELETE CASCADE
+);

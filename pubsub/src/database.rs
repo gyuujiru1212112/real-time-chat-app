@@ -1,3 +1,4 @@
+use crate::common::UserMessage;
 use sqlx::{mysql::MySqlPool, Error, FromRow};
 use std::env;
 
@@ -9,10 +10,11 @@ pub struct User {
     pub session_id: Option<String>,
 }
 
-#[derive(Debug, FromRow)]
-pub struct ChatRoom {
-    id: i64,
-    name: String,
+#[derive(FromRow)]
+pub struct ChatMessage {
+    pub chat_id: String,
+    pub username: String,
+    pub message: String,
 }
 
 pub struct DbManager {
@@ -71,5 +73,52 @@ impl DbManager {
             None => println!("Invalid username. Could not find user \'{}\'.", username),
         }
         is_valid
+    }
+
+    pub async fn save_message(&self, user_msg: &UserMessage) {
+        let query = format!(
+            "INSERT INTO chat_message (chat_id, username, message) VALUES (\"{}\", \"{}\", \"{}\");",
+            user_msg.topic, user_msg.sender, user_msg.content
+        );
+
+        let result = sqlx::query(&query).execute(&self.conn_pool).await;
+        match result {
+            Ok(_) => (),
+            Err(e) => {
+                println!(
+                    "Error inserting message from user {} in chat {} : {}",
+                    user_msg.sender,
+                    user_msg.topic,
+                    e.to_string()
+                );
+            }
+        }
+    }
+
+    pub async fn get_message_history(
+        &self,
+        topic: String,
+        num_messages: usize,
+    ) -> Option<Vec<ChatMessage>> {
+        // "SELECT * FROM chat_message WHERE chat_id = \"{}\" LIMIT {};",
+        // "SELECT * FROM (SELECT * FROM chat_message WHERE chat_id = \"{}\" ORDER BY id DESC LIMIT {}) AS sub ORDER BY id ASC;"
+        let query = format!(
+            "SELECT * FROM (SELECT * FROM chat_message WHERE chat_id = \"{}\" ORDER BY id DESC LIMIT {}) AS sub ORDER BY id ASC;",
+            &topic, num_messages
+        );
+
+        let result = sqlx::query_as::<_, ChatMessage>(&query)
+            .fetch_all(&self.conn_pool)
+            .await;
+        match result {
+            Ok(messages) => {
+                println!("number of history messages returned: {}", messages.len());
+                Some(messages)
+            }
+            Err(e) => {
+                println!("Error querying chat_message table for {} : {}", topic, e);
+                None
+            }
+        }
     }
 }
