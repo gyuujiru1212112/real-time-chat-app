@@ -54,7 +54,7 @@ pub fn print_help_msg_by_default() {
         LOGIN_CMD.cyan(),
         "[username] [password]".cyan()
     );
-    println!("Exit {}", EXIT_CMD.cyan());
+    println!("Exit: {}", EXIT_CMD.cyan());
 
     print_user_name_rule();
     print_password_rule();
