@@ -34,17 +34,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let readline = rl.readline(&prompt);
                 match readline {
                     Err(_) => {
-                        // logout first
-                        if user.session_exists() {
-                            user.logout(&client).await?;
-                        }
-
-                        // exit the app
-                        print_msg("App is shutting down...");
-                        print_msg("Bye!");
-                        break;
+                        current_mode = "main";
+                        prompt = format!("{} >> ", user.get_user_name());
+                        continue;
                     }
                     Ok(input) => {
+                        rl.add_history_entry(input.clone());
+                        
                         match commands::parse_command(&input) {
                             Some(Command::Help) => {
                                 if user.session_exists() {
@@ -250,7 +246,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
-                                let res = user.join_chat_room(&client, chat_id.clone()).await;
+                                let res = user.join_chat_room().await;
                                 match res {
                                     Ok(()) => {
                                         current_mode = "child";

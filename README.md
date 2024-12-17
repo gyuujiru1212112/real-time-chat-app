@@ -79,7 +79,7 @@ Once logged in, the following commands are available:
 - **`check [username]`**  
   Checks the online status of a specific user.
 - **`private-chat [with_user_name]`**  
-  Initiates a private chat with the specified user.
+  Initiates a private chat with the specified user. A private chat cannot be created if one already exists with the same participants, regardless of the order. Use `list-recipients` to view all recipients, and `resume-chat [recipient]` to continue an existing private chat.
 - **`resume-chat [recipient]`**  
   Resumes an ongoing private chat with the specified recipient.
 - **`list-recipients`**  
@@ -87,16 +87,20 @@ Once logged in, the following commands are available:
 - **`chat-room [group_name] [user1] [user2] [user3]...`**  
   Creates a new chat room with the specified group name and users.
 - **`join-chat-room [id]`**  
-  Joins an existing chat room by its ID.
+  Joins an existing chat room by its ID. Use `list-chat-rooms` to view the ID.
 - **`list-chat-rooms`**  
-  Lists all existing chat rooms.
+  Lists all existing chat rooms with their associated names and IDs.
 - **`exit`**  
   Exits the program.
 
 #### Commands available inside a chat session
-  - `:help` - Show chat command options.
-  - `:exit` - Leave the chat and return to main app command line.
-  - `:history` - Show the last 10 messages in the chat.
+  - **`:help`**   
+  Show chat command options.
+  - **`:exit`**    
+  Leave the chat and return to main app command line. Press the `Enter` key if it becomes unresponsive.
+  - **`:history`**    
+  Show the last 10 messages in the chat.
+
 
 ### Server
 
@@ -159,6 +163,7 @@ Tables
 | chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
 | chat_message | Table for storing chat messages so that they can be queried by users when they request to see chat history. |
 
+
 ## Reproducibility Guide:
 
 ### Build & Run
@@ -185,7 +190,15 @@ Tables
   - Developed the initial client setup.
   - Designed the CLI utility with rustyline for user interaction.
   - Implemented CLI commands for features such as signup, login, logout, listing all users, checking user status, initiating/resuming private chats, creating chat rooms, listing all recipients, and listing all chat rooms.
-  - Built API endpoints to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
+  - Built API endpoints with Rocket and sqlx to support functionalities like listing users, initiating/resuming private chats, creating chat rooms, and retrieving chat room or recipient lists.
   - Contributed to the project report.
 
-## Lessons learned and concluding remarks: Write about any lessons the team has learned throughout the project and concluding remarks, if any.
+## Lessons learned and concluding remarks
+**Lessons Learned**
+- Developed a strong knowledge of real-time communication by building a messaging service using the publish-subscribe model with WebSockets.
+- Gained skills in using Rocket to create API endpoints and handle routing efficiently.
+- Earned experience using sqlx to design and work with a MySQL database service.
+
+The project related to the real-time chat application was full of challenges and rewarding experiences. It allowed us to apply the knowledge from the lectures in practice. Throughout this project, we deepened our understanding of real-time systems, user authentication, and the complexities of developing scalable and user-friendly applications.
+
+While the completed project meets the essential requirements, there are areas where we can improve. Potential enhancements include increasing performance, implementing encryption for secure communication, and improving the user interface to a front-end application. Overall, this project has taught us valuable lessons and equipped us with a deeper understanding of complex systems.
