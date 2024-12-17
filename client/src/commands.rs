@@ -31,8 +31,7 @@ pub enum Command {
         with_user: String,
     },
     CreateChatRoom {
-        name: String,
-        users: Vec<String>,
+        name: String
     },
     JoinChatRoom {
         chat_id: String,
@@ -66,11 +65,9 @@ pub fn parse_command(input: &str) -> Option<Command> {
         [RESUME_CHAT_CMD, with_user] => Some(Command::ResumeChat {
             with_user: (with_user.to_string()),
         }),
-        [CHAT_ROOM_CMD, name, users @ ..] => {
-            let user_list: Vec<String> = users.iter().map(|&user| user.to_string()).collect();
+        [CHAT_ROOM_CMD, name] => {
             Some(Command::CreateChatRoom {
-                name: (name.to_string()),
-                users: (user_list),
+                name: (name.to_string())
             })
         }
         [JOIN_CHAT_ROOM_CMD, chat_id] => Some(Command::JoinChatRoom {

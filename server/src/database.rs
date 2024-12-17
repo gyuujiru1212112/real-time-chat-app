@@ -1,5 +1,3 @@
-use std::result;
-
 use sqlx::{mysql::MySqlPool, Error, FromRow, Row};
 use uuid::Uuid;
 
@@ -128,11 +126,7 @@ impl DbManager {
         }
     }
 
-    pub async fn insert_chat_room(&self, name: &str, users: &Vec<String>) -> Option<String> {
-        if users.is_empty() {
-            println!("Cannot create the chat room '{}' without members", name);
-            return None;
-        }
+    pub async fn insert_chat_room(&self, name: &str) -> Option<String> {
         // insert the chat room
         let query = "INSERT INTO chat_room (name) VALUES (?)";
         let id = match sqlx::query(&query)
@@ -146,24 +140,6 @@ impl DbManager {
                 return None;
             }
         };
-
-        // insert the members
-        let insert_user_query = "INSERT INTO room_member (room_id, username) VALUES (?, ?)";
-        for user in users {
-            if let Err(e) = sqlx::query(&insert_user_query)
-                .bind(id)
-                .bind(user)
-                .execute(&self.conn_pool)
-                .await
-            {
-                println!(
-                    "Failed to insert user '{}' into room {}: {}",
-                    user,
-                    name,
-                    e.to_string()
-                );
-            };
-        }
 
         // update chat_room_id
         let chat_room_id = Uuid::new_v4().to_string();

@@ -84,8 +84,8 @@ Once logged in, the following commands are available:
   Resumes an ongoing private chat with the specified recipient.
 - **`list-recipients`**  
   Lists all the users you have had private chats with.
-- **`chat-room [group_name] [user1] [user2] [user3]...`**  
-  Creates a new chat room with the specified group name and users.
+- **`chat-room [group_name]`**  
+  Creates a new chat room with the specified group name.
 - **`join-chat-room [id]`**  
   Joins an existing chat room by its ID. Use `list-chat-rooms` to view the ID.
 - **`list-chat-rooms`**  

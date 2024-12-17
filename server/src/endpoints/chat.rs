@@ -17,8 +17,7 @@ pub struct ChatRoomResponse {
 pub struct ChatRoomRequest {
     username: String,
     session_id: String,
-    room_name: String,
-    members: Vec<String>, // other than the username itself
+    room_name: String
 }
 
 #[derive(Deserialize, Serialize)]
@@ -98,25 +97,6 @@ pub async fn resume_private_chat<'a>(
     }
 }
 
-#[post("/private-chat/exit", format = "json", data = "<private_chat_info>")]
-pub async fn exit_private_chat<'a>(
-    private_chat_info: Json<PrivateChatRequest>,
-    db_manager: &rocket::State<DbManager>,
-) -> Status {
-    let valid_session: bool = is_session_id_valid(
-        &private_chat_info.username,
-        &private_chat_info.session_id,
-        db_manager.inner(),
-    )
-    .await;
-
-    if !valid_session {
-        return Status::Unauthorized;
-    }
-
-    Status::Ok
-}
-
 #[post("/chat-room/create", format = "json", data = "<chat_room_info>")]
 pub async fn create_chat_room<'a>(
     chat_room_info: Json<ChatRoomRequest>,
@@ -133,13 +113,8 @@ pub async fn create_chat_room<'a>(
         return (Status::Unauthorized, Json(String::new()));
     }
 
-    let members = {
-        let mut temp = chat_room_info.members.clone();
-        temp.push(chat_room_info.username.to_owned());
-        temp
-    };
     let res = db_manager
-        .insert_chat_room(&chat_room_info.room_name, &members)
+        .insert_chat_room(&chat_room_info.room_name)
         .await;
     if let Some(chat_room_id) = res {
         println!("Chat room '{}' created", chat_room_info.room_name);
