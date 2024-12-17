@@ -79,7 +79,7 @@ Once logged in, the following commands are available:
 - **`check [username]`**  
   Checks the online status of a specific user.
 - **`private-chat [with_user_name]`**  
-  Initiates a private chat with the specified user.
+  Initiates a private chat with the specified user. A private chat cannot be created if one already exists with the same participants, regardless of the order. Use `list-recipients` to view all recipients, and `resume-chat [recipient]` to continue an existing private chat.
 - **`resume-chat [recipient]`**  
   Resumes an ongoing private chat with the specified recipient.
 - **`list-recipients`**  
@@ -87,15 +87,17 @@ Once logged in, the following commands are available:
 - **`chat-room [group_name] [user1] [user2] [user3]...`**  
   Creates a new chat room with the specified group name and users.
 - **`join-chat-room [id]`**  
-  Joins an existing chat room by its ID.
+  Joins an existing chat room by its ID. Use `list-chat-rooms` to view the ID.
 - **`list-chat-rooms`**  
-  Lists all existing chat rooms.
+  Lists all existing chat rooms with their associated names and IDs.
 - **`exit`**  
   Exits the program.
 
 #### Commands available inside a chat session
-  - **`:help`** - Show chat command options.
-  - **`:exit`** - Leave the chat and return to main app command line.
+  - **`:help`**   
+  Show chat command options.
+  - **`:exit`**    
+  Leave the chat and return to main app command line. Press the `Enter` key if it becomes unresponsive.
 
 ### Server
 
