@@ -45,6 +45,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         break;
                     }
                     Ok(input) => {
+                        rl.add_history_entry(input.clone());
+                        
                         match commands::parse_command(&input) {
                             Some(Command::Help) => {
                                 if user.session_exists() {
