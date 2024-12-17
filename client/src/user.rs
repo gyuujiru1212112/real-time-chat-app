@@ -2,7 +2,6 @@ use reqwest::{header, Client, Url};
 use rocket::serde::json::Value;
 use rocket::serde::ser::StdError;
 use rocket::serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 use crate::common::{print_msg, print_warning_error_msg};
 
@@ -35,8 +34,7 @@ pub struct UserStatus {
 pub struct ChatRoomInfo {
     username: String,
     session_id: String,
-    room_name: String,
-    members: Vec<String>,
+    room_name: String
 }
 
 #[derive(Deserialize, Serialize)]
@@ -371,22 +369,14 @@ impl User {
     pub async fn create_chat_room(
         &mut self,
         client: &Client,
-        room_name: String,
-        members: &Vec<String>,
+        room_name: String
     ) -> Result<Option<String>, Box<dyn StdError>> {
         let session = self.session.as_ref().unwrap();
-
-        let unique_members: HashSet<String> = members.iter().cloned().collect();
-        if unique_members.is_empty() {
-            print_warning_error_msg("You are not allowed to create a group chat without members");
-            return Ok(None);
-        }
 
         let chat_room_info = ChatRoomInfo {
             username: session.username.clone(),
             session_id: session.session_id.clone(),
             room_name: room_name.clone(),
-            members: unique_members.into_iter().collect(),
         };
 
         let url = "http://localhost:8000/chatapp/chat/chat-room/create"; // endpoint

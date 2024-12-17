@@ -1,5 +1,7 @@
 # Real-Time Chat Application
 
+Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1ZO9cc_8TjZPgFKE3cImeM_HJiGKrWbUS/view?usp=sharing).
+
 ## Team Members:
 - Kayleigh McNeil [1001278164]
   - email: kayleigh.mcneil@mail.utoronto.ca
@@ -84,8 +86,8 @@ Once logged in, the following commands are available:
   Resumes an ongoing private chat with the specified recipient.
 - **`list-recipients`**  
   Lists all the users you have had private chats with.
-- **`chat-room [group_name] [user1] [user2] [user3]...`**  
-  Creates a new chat room with the specified group name and users.
+- **`chat-room [group_name]`**  
+  Creates a new chat room with the specified group name.
 - **`join-chat-room [id]`**  
   Joins an existing chat room by its ID. Use `list-chat-rooms` to view the ID.
 - **`list-chat-rooms`**  
@@ -165,7 +167,6 @@ Tables
 
 
 ## Reproducibility Guide:
-Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1gwnKXG9gDT_5GfdXjOmID5IH8WGt7XPE/view?usp=sharing).
 ### Build & Run
 
 1. Install Docker and Docker Compose if not already installed

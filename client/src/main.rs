@@ -209,13 +209,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                                 user.list_all_recipients(&client).await?;
                             }
-                            Some(Command::CreateChatRoom { name, users }) => {
+                            Some(Command::CreateChatRoom { name }) => {
                                 if !user.session_exists() {
                                     print_session_not_exist_error_msg();
                                     continue;
                                 }
                                 let res =
-                                    user.create_chat_room(&client, name.clone(), &users).await?;
+                                    user.create_chat_room(&client, name.clone()).await?;
 
                                 match res {
                                     Some(chat_room_id) => {

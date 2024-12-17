@@ -87,7 +87,7 @@ pub fn print_help_msg_after_login() {
     println!(
         "Create chat room with a list of users: {} {}",
         CHAT_ROOM_CMD.cyan(),
-        "[group_name] [user1] [user2] [user3]...".cyan()
+        "[group_name]".cyan()
     );
     println!(
         "Join an existing chat room: {} {}",
