@@ -180,6 +180,50 @@ Tables
 4. Run one or more instances of the client to interact with the application: `cargo run --release -p client`
 
 
+### Example Usage - Create a chat between two users
+
+This example requires two client instances running in seperate terminals:
+
+Terminal 1:
+* Start the client if not already started:  
+`cargo run --release -p client`
+* Create a new user:  
+`signup userABC userabc.test@email.com testpwd@123`
+* Login to new user account:  
+`login userABC testpwd@123`
+
+Terminal 2:
+* Start the client if not already started in a second terminal:  
+`cargo run --release -p client`
+* Create another new user:  
+`signup userDEF userdef.test@email.com testpwd@123`
+* Login to new user account:  
+`login userDEF testpwd@123`
+* Create a new private chat between users `userABC` and `userDEF`:  
+`private-chat userABC`
+
+Terminal 1:
+* Have user `userABC` join the new chat with user `userDEF`:  
+`resume-chat userDEF`
+
+Now users `userABC` and `userDEF` can send each other messages in a private chat. To exit from the chat, enter `:exit` in the chat session for each user.
+
+### Example Usage - Chat room with multiple users
+
+This example uses the two users in the example above (`userABC` and `userDEF`) along with two new users (`userGHI` and `userJKL`) to create a group chat. Each user will need its own client instance in its own terminal. 
+
+* Start up a client instance for each user.
+  * For new users `userGHI` and `userJKL` follow the commands described in the example above to sign up and log in. 
+* In the terminal for `userABC` create a new group chat:  
+`chat-room NewChatRoom!`
+* In each of the clients for users `userDEF`, `userGHI`, and `userJKL` find the new chat room id by listing the chat rooms:
+`list-chat-rooms`
+* Join the chat room using the chat id from the command above:
+`join-chat-room <chat_id>`
+
+Now users `userABC`, `userDEF`, `userGHI`, and `userJKL` can communicate in the chat room. At any point in the chat session, a user can enter the command `:help` in the chat to see the in-chat command options.
+
+
 ## Contributions by each team member:
 - **Kayleigh McNeil**:
   - Developed initial server setup with Rocket and sqlx.
