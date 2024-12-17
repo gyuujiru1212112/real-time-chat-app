@@ -1,5 +1,7 @@
 # Real-Time Chat Application
 
+Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1ZO9cc_8TjZPgFKE3cImeM_HJiGKrWbUS/view?usp=sharing).
+
 ## Team Members:
 - Kayleigh McNeil [1001278164]
   - email: kayleigh.mcneil@mail.utoronto.ca
@@ -165,7 +167,6 @@ Tables
 
 
 ## Reproducibility Guide:
-Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1gwnKXG9gDT_5GfdXjOmID5IH8WGt7XPE/view?usp=sharing).
 ### Build & Run
 
 1. Install Docker and Docker Compose if not already installed
