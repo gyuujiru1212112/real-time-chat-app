@@ -179,7 +179,7 @@ Please check the **demo.mp4**. If you’re unable to download it, you can access
 4. Run one or more instances of the client to interact with the application: `cargo run --release -p client`
 
 
-### Example Useage - Create a chat between two users
+### Example Usage - Create a chat between two users
 
 This example requires two client instances running in seperate terminals:
 
@@ -207,14 +207,14 @@ Terminal 1:
 
 Now users `userABC` and `userDEF` can send each other messages in a private chat. To exit from the chat, enter `:exit` in the chat session for each user.
 
-### Example Useage - Chat room with multiple users
+### Example Usage - Chat room with multiple users
 
 This example uses the two users in the example above (`userABC` and `userDEF`) along with two new users (`userGHI` and `userJKL`) to create a group chat. Each user will need its own client instance in its own terminal. 
 
 * Start up a client instance for each user.
   * For new users `userGHI` and `userJKL` follow the commands described in the example above to sign up and log in. 
 * In the terminal for `userABC` create a new group chat:  
-`chat-room NewChatRoom! userDEF userGHI userJKL`
+`chat-room NewChatRoom!`
 * In each of the clients for users `userDEF`, `userGHI`, and `userJKL` find the new chat room id by listing the chat rooms:
 `list-chat-rooms`
 * Join the chat room using the chat id from the command above:
