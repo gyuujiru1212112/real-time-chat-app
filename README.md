@@ -89,13 +89,15 @@ Once logged in, the following commands are available:
 - **`join-chat-room [id]`**  
   Joins an existing chat room by its ID. Use `list-chat-rooms` to view the ID.
 - **`list-chat-rooms`**  
-  Lists all existing chat rooms with associated names and IDs.
+  Lists all existing chat rooms with their associated names and IDs.
 - **`exit`**  
   Exits the program.
 
 #### Commands available inside a chat session
-  - **`:help`** - Show chat command options.
-  - **`:exit`** - Leave the chat and return to main app command line.
+  - **`:help`**   
+  Show chat command options.
+  - **`:exit`**    
+  Leave the chat and return to main app command line. Press the `Enter` key if it becomes unresponsive.
 
 ### Server
 
