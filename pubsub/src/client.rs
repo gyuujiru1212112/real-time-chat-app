@@ -137,7 +137,7 @@ impl PubSubClient {
                                 println!("------------------");
                                 println!(":help --> Show chat command options");
                                 println!(":exit --> Leave the chat");
-                                println!(":history --> See the last 10 messages in the chat");
+                                println!(":history --> Show the last 10 messages in the chat");
                                 ()
                             } else if line == ":exit" {
                                 println!("Leaving the chat...");
