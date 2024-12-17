@@ -158,7 +158,6 @@ Tables
 | private_chat | A record of the existing private chats that exist between pairs of users and their unique chat ids. |
 | chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
 | chat_message | Table for storing chat messages so that they can be queried by users when they request to see chat history. |
-| room_member | |
 
 ## Reproducibility Guide:
 
