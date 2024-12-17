@@ -98,6 +98,9 @@ Once logged in, the following commands are available:
   Show chat command options.
   - **`:exit`**    
   Leave the chat and return to main app command line. Press the `Enter` key if it becomes unresponsive.
+  - **`:history`**    
+  Show the last 10 messages in the chat.
+
 
 ### Server
 
@@ -158,7 +161,8 @@ Tables
 | user | Contains an entry for each user. Users must have unique usernames. When a user is logged in, the active session_id for that user is stored in this table for verification purposes. |
 | private_chat | A record of the existing private chats that exist between pairs of users and their unique chat ids. |
 | chat_room | A record of the different chat rooms that exist and their associated names and chat unique ids. |
-| room_member | A record of the team members of the chat room with their associated names and chat_room ids. |
+| chat_message | Table for storing chat messages so that they can be queried by users when they request to see chat history. |
+
 
 ## Reproducibility Guide:
 Please check the **demo.mp4**. If you’re unable to download it, you can access it via the [link](https://drive.google.com/file/d/1gwnKXG9gDT_5GfdXjOmID5IH8WGt7XPE/view?usp=sharing).

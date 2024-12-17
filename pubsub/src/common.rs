@@ -35,7 +35,14 @@ pub struct SubscriptionMessage {
     pub action: SubscriptionAction,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
+pub struct FetchHistoryMessage {
+    pub topic: String,
+    pub username: String,
+    pub num_messages: usize,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct UserMessage {
     pub topic: String,
     pub sender: String,

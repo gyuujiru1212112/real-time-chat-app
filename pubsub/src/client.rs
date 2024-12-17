@@ -1,5 +1,6 @@
 use crate::common::{
-    ErrorMessage, SubscriptionAction, SubscriptionMessage, UserMessage, PUBSUB_SERVER_ADDRESS,
+    ErrorMessage, FetchHistoryMessage, SubscriptionAction, SubscriptionMessage, UserMessage,
+    PUBSUB_SERVER_ADDRESS,
 };
 use futures_util::stream::StreamExt;
 use futures_util::SinkExt;
@@ -84,6 +85,19 @@ impl PubSubClient {
         }
     }
 
+    pub async fn fetch_history(&mut self) -> Result<(), Error> {
+        let fetch_history_message: FetchHistoryMessage = FetchHistoryMessage {
+            topic: self.topic.clone().unwrap(),
+            username: self.username.clone(),
+            num_messages: 10,
+        };
+        let message = Message::text(serde_json::to_string(&fetch_history_message).unwrap());
+        match self.stream.send(message).await {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub async fn start(&mut self) -> Result<(), Error> {
         let stdin = tokio::io::stdin();
         let mut stdin = BufReader::new(stdin).lines();
@@ -118,16 +132,20 @@ impl PubSubClient {
                         Ok(None) => return Ok(()),
                         Ok(Some(line)) => {
                             // If there will be more commands, consider making an enum.
-                            if line == ":exit" {
-                                println!("Leaving the chat...");
-                                self.unsubscribe().await?;
-                                self.stream.close().await?
-                            } else if line == ":help" {
+                            if line == ":help" {
                                 println!("Chat Room Commands");
                                 println!("------------------");
                                 println!(":help --> Show chat command options");
                                 println!(":exit --> Leave the chat");
+                                println!(":history --> Show the last 10 messages in the chat");
                                 ()
+                            } else if line == ":exit" {
+                                println!("Leaving the chat...");
+                                self.unsubscribe().await?;
+                                self.stream.close().await?
+                            } else if line == ":history" {
+                                println!("Fetching chat history...");
+                                self.fetch_history().await?
                             } else {
                                 let user_message = self.create_user_message(line.to_string());
                                 let message = Message::text(serde_json::to_string(&user_message).unwrap());

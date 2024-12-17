@@ -1,4 +1,4 @@
-use crate::common::{PubSubError, SubscriptionMessage, UserMessage};
+use crate::common::{FetchHistoryMessage, PubSubError, SubscriptionMessage, UserMessage};
 use crate::database::DbManager;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -7,7 +7,6 @@ use tokio_websockets::Message;
 
 struct Subscriber {
     topic: Option<String>,
-    username: String,
     sender: Sender<Message>,
 }
 
@@ -42,7 +41,6 @@ impl Broker {
                 let mut subscribers = self.subscribers.lock().unwrap();
                 let subscriber: Subscriber = Subscriber {
                     topic: Some(sub_msg.topic.clone()),
-                    username: sub_msg.username.clone(),
                     sender,
                 };
                 subscribers.insert(sub_msg.username.clone(), subscriber);
@@ -105,6 +103,9 @@ impl Broker {
         let subscribers = self.subscribers.lock().unwrap();
         let mut topics = self.topics.lock().unwrap();
 
+        // Save the received message to db for chat history purposes.
+        self.save_message(&user_msg);
+
         let msg: Message = Message::text(serde_json::to_string(&user_msg).unwrap());
 
         if let Some(topic_subs) = topics.get_mut(&user_msg.topic) {
@@ -116,5 +117,44 @@ impl Broker {
                 }
             }
         }
+    }
+
+    fn save_message(&self, user_msg: &UserMessage) {
+        let cloned_db_manager = self.db_manager.clone();
+        let cloned_user_msg = user_msg.clone();
+        tokio::spawn(async move {
+            cloned_db_manager.save_message(&cloned_user_msg).await;
+        });
+    }
+
+    pub async fn fetch_history(&self, hist_msg: &FetchHistoryMessage) {
+        let subscribers = self.subscribers.lock().unwrap();
+        let subscriber = subscribers.get(&hist_msg.username).unwrap();
+
+        let cloned_sender = subscriber.sender.clone();
+        let cloned_db_manager = self.db_manager.clone();
+        let cloned_hist_msg = hist_msg.clone();
+
+        tokio::spawn(async move {
+            match cloned_db_manager
+                .get_message_history(cloned_hist_msg.topic, cloned_hist_msg.num_messages)
+                .await
+            {
+                Some(messages) => {
+                    for hist_msg in messages.iter() {
+                        let user_msg = UserMessage {
+                            topic: hist_msg.chat_id.clone(),
+                            sender: hist_msg.username.clone(),
+                            content: hist_msg.message.clone(),
+                        };
+                        let msg: Message = Message::text(serde_json::to_string(&user_msg).unwrap());
+                        let _ = cloned_sender.send(msg.clone());
+                    }
+                }
+                None => {
+                    println!("No message history returned");
+                }
+            }
+        });
     }
 }

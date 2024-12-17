@@ -1,5 +1,7 @@
 use crate::broker::Broker;
-use crate::common::{ErrorMessage, SubscriptionMessage, UserMessage, PUBSUB_HOST_PORT};
+use crate::common::{
+    ErrorMessage, FetchHistoryMessage, SubscriptionMessage, UserMessage, PUBSUB_HOST_PORT,
+};
 use futures_util::sink::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -82,12 +84,16 @@ async fn handle_connection(mut broker: Broker, ws_stream: WebSocketStream<TcpStr
                     if let Ok(sub_msg) = serde_json::from_str::<SubscriptionMessage>(&text) {
                         broker.unsubscribe(&sub_msg).await;
                         break;
-                    }
-                    match serde_json::from_str::<UserMessage>(text) {
-                        Ok(user_msg) => {
-                            broker.publish(user_msg);
+                    } else if let Ok(hist_msg) = serde_json::from_str::<FetchHistoryMessage>(&text)
+                    {
+                        broker.fetch_history(&hist_msg).await;
+                    } else {
+                        match serde_json::from_str::<UserMessage>(text) {
+                            Ok(user_msg) => {
+                                broker.publish(user_msg);
+                            }
+                            Err(e) => println!("Oops: {}, message: {}", e, text),
                         }
-                        Err(e) => println!("Oops: {}", e),
                     }
                 }
                 None => (),
